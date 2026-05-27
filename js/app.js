@@ -164,6 +164,8 @@
         const entry = combos[key];
         const a = entry ? entry.a : 0;
         const c = entry ? entry.c : 0;
+        const targetPc = theory.pitchClass(pc + iv.semi);
+        const targetName = theory.pcName(targetPc);
 
         if (entry && entry.a > 0) {
           if (isTime) {
@@ -184,10 +186,10 @@
           const n = entry ? entry.n : 0;
           const avg = n > 0 ? Math.round(entry.t / n) : 0;
           const label = n > 0 ? avg + 'ms' : '—';
-          cell.title = theory.pcName(pc) + ' × ' + iv.name + ' — ' + label + ' (' + c + '/' + a + ')';
+          cell.title = theory.pcName(pc) + ' + ' + iv.name + ' = ' + targetName + ' — ' + label + ' (' + c + '/' + a + ')';
         } else {
           const acc = a ? c / a : 0;
-          cell.title = theory.pcName(pc) + ' × ' + iv.name + ' — ' + c + '/' + a + ' (' + Math.round(acc * 100) + '%)';
+          cell.title = theory.pcName(pc) + ' + ' + iv.name + ' = ' + targetName + ' — ' + c + '/' + a + ' (' + Math.round(acc * 100) + '%)';
         }
 
         hm.appendChild(cell);
