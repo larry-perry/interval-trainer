@@ -53,7 +53,16 @@
       <button class="primary-btn" id="actionBtn" type="button">Start</button>
       <button class="ghost-btn" id="replayBtn" type="button" disabled>Replay&nbsp;⟳</button>
       <button class="ghost-btn" id="resetBtn" type="button">Reset score</button>
-      <button class="ghost-btn" id="settingsBtn" type="button">⚙️ Settings</button>
+      <label class="switch" title="Automatically move to the next note ~1s after a correct answer">
+        <input type="checkbox" id="autoAdvance" checked />
+        <span class="switch-track"><span class="switch-thumb"></span></span>
+        <span class="switch-text">Auto-advance</span>
+      </label>
+      <label class="switch" title="Very slightly increase odds of weak or slow combos">
+        <input type="checkbox" id="nudgeWeak" />
+        <span class="switch-track"><span class="switch-thumb"></span></span>
+        <span class="switch-text">Nudge weak spots</span>
+      </label>
     </section>
 
     <section class="intervals" style="--d:5">
@@ -83,32 +92,6 @@
       </div>
       <div class="heatmap" id="heatmap"></div>
     </section>
-
-    <div class="modal-overlay" id="settingsModal" style="display:none;" aria-hidden="true">
-      <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
-        <div class="modal-header">
-          <h2 id="settingsTitle">Settings</h2>
-          <button class="modal-close" id="modalClose" type="button" aria-label="Close">×</button>
-        </div>
-        <div class="modal-body">
-          <div class="setting-row">
-            <span class="setting-label">Auto-advance after correct answer</span>
-            <label class="switch" title="Automatically move to the next note ~1s after a correct answer">
-              <input type="checkbox" id="autoAdvance" checked />
-              <span class="switch-track"><span class="switch-thumb"></span></span>
-            </label>
-          </div>
-          <div class="setting-row">
-            <span class="setting-label">Nudge weak spots</span>
-            <div class="segment" role="group" aria-label="Weak spot nudge">
-              <button class="segment-btn active" data-nudge="off" type="button">Off</button>
-              <button class="segment-btn" data-nudge="soft" type="button">Soft</button>
-              <button class="segment-btn" data-nudge="hard" type="button">Hard</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <footer class="foot">
       Built on the interval-trainer idea by TuTempo Academia Musical — now it listens to the note you actually play.

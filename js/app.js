@@ -30,10 +30,7 @@
     heatmap: $('#heatmap'),
     heatmapLabel: $('#heatmapLabel'),
     hmModeBtns: [...document.querySelectorAll('.hm-mode-btn')],
-    settingsBtn: $('#settingsBtn'),
-    settingsModal: $('#settingsModal'),
-    modalClose: $('#modalClose'),
-    nudgeBtns: [...document.querySelectorAll('[data-nudge]')],
+    nudgeWeak: $('#nudgeWeak'),
   };
 
   const AUTO_ADVANCE_MS = 1100; // ~1s after a correct answer, per request
@@ -219,7 +216,7 @@
         mode: trainer.mode,
         keyboardSize,
         autoAdvance: els.autoAdvance.checked,
-        nudgeWeak: trainer.weakSpotWeighting,
+        nudgeWeak: els.nudgeWeak.checked,
         stats: { ...trainer.stats },
         combos,
         heatmapMode,
@@ -243,11 +240,10 @@
         syncActionEnabled();
       }
 
-      let nudgeMode = 'off';
-      if (typeof data.nudgeWeak === 'boolean') nudgeMode = data.nudgeWeak ? 'soft' : 'off';
-      else if (['off', 'soft', 'hard'].includes(data.nudgeWeak)) nudgeMode = data.nudgeWeak;
-      trainer.setWeakSpotWeighting(nudgeMode);
-      els.nudgeBtns.forEach((b) => b.classList.toggle('active', b.dataset.nudge === nudgeMode));
+      if (typeof data.nudgeWeak === 'boolean') {
+        els.nudgeWeak.checked = data.nudgeWeak;
+        trainer.setWeakSpotWeighting(data.nudgeWeak);
+      }
 
       if (data.mode === 'play' || data.mode === 'ear') {
         trainer.setMode(data.mode);
@@ -549,34 +545,14 @@
 
   els.autoAdvance.addEventListener('change', saveState);
 
-  /* ---------- settings modal ---------- */
-  function openModal() {
-    els.settingsModal.style.display = 'flex';
-    els.settingsModal.setAttribute('aria-hidden', 'false');
-    els.modalClose.focus();
-  }
-  function closeModal() {
-    els.settingsModal.style.display = 'none';
-    els.settingsModal.setAttribute('aria-hidden', 'true');
-    els.settingsBtn.focus();
-  }
-  els.settingsBtn.addEventListener('click', openModal);
-  els.modalClose.addEventListener('click', closeModal);
-  els.settingsModal.addEventListener('click', (e) => { if (e.target === els.settingsModal) closeModal(); });
-
-  els.nudgeBtns.forEach((b) => {
-    b.addEventListener('click', () => {
-      if (b.classList.contains('active')) return;
-      els.nudgeBtns.forEach((x) => x.classList.toggle('active', x === b));
-      trainer.setWeakSpotWeighting(b.dataset.nudge);
-      saveState();
-    });
+  els.nudgeWeak.addEventListener('change', () => {
+    trainer.setWeakSpotWeighting(els.nudgeWeak.checked);
+    saveState();
   });
 
   // Spacebar = Start/Next, R = replay.
   document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'SELECT') return;
-    if (e.key === 'Escape' && els.settingsModal.style.display !== 'none') { e.preventDefault(); closeModal(); return; }
     if (e.code === 'Space') { e.preventDefault(); if (!els.actionBtn.disabled) els.actionBtn.click(); }
     else if (e.key === 'r' || e.key === 'R') els.replayBtn.click();
   });

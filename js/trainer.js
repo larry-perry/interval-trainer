@@ -23,13 +23,13 @@
     let phase = 'idle'; // idle | awaiting | answered
     const stats = { correct: 0, wrong: 0, streak: 0, best: 0, total: 0 };
     let combosData = {}; // optional: { 'rootPc:semi': { a, c, t, n } }
-    let weakSpotWeighting = 'off';
+    let weakSpotWeighting = false;
 
     const setMode = (m) => { mode = m; };
     const setSelected = (set) => { selected = new Set(set); };
     const hasSelection = () => selected.size > 0;
     const setCombos = (data) => { combosData = data || {}; };
-    const setWeakSpotWeighting = (v) => { weakSpotWeighting = v === 'soft' || v === 'hard' ? v : 'off'; };
+    const setWeakSpotWeighting = (v) => { weakSpotWeighting = !!v; };
 
     function resetStats() {
       stats.correct = stats.wrong = stats.streak = stats.best = stats.total = 0;
@@ -49,15 +49,9 @@
       if (!entry || entry.a === 0) return 1.0;
       const acc = entry.c / entry.a;
       let w = 1.0;
-      if (weakSpotWeighting === 'soft') {
-        if (acc < 0.5) w = 1.3;
-        else if (acc >= 0.8) w = 0.7;
-        if (entry.n > 0 && entry.t / entry.n > 3000) w += 0.2;
-      } else if (weakSpotWeighting === 'hard') {
-        if (acc < 0.5) w = 2.8;
-        else if (acc >= 0.8) w = 0.5;
-        if (entry.n > 0 && entry.t / entry.n > 3000) w += 0.5;
-      }
+      if (acc < 0.5) w = 1.3;
+      else if (acc >= 0.8) w = 0.7;
+      if (entry.n > 0 && entry.t / entry.n > 3000) w += 0.2;
       return w;
     }
 
@@ -78,7 +72,7 @@
       const semis = [...selected];
 
       let rootPc, semi, attempts = 0;
-      if (weakSpotWeighting !== 'off') {
+      if (weakSpotWeighting && Object.keys(combosData).length > 0) {
         const pool = [];
         semis.forEach((s) => {
           for (let pc = 0; pc < 12; pc++) {
