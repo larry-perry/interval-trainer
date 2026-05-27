@@ -31,10 +31,17 @@
     heatmapLabel: $('#heatmapLabel'),
     hmModeBtns: [...document.querySelectorAll('.hm-mode-btn')],
     nudgeWeak: $('#nudgeWeak'),
+    nudgeStrength: $('#nudgeStrength'),
+    nudgeStrengthLabel: $('#nudgeStrengthLabel'),
+    debugWeights: $('#debugWeights'),
     settingsBtn: $('#settingsBtn'),
     settingsModal: $('#settingsModal'),
     settingsClose: $('#settingsClose'),
   };
+
+  // Slider positions → weighting strength fed to the trainer, and their labels.
+  const STRENGTH_FACTORS = { 1: 0.5, 2: 1.5, 3: 3 };
+  const STRENGTH_LABELS = { 1: 'Gentle', 2: 'Medium', 3: 'Strong' };
 
   const AUTO_ADVANCE_MS = 1100; // ~1s after a correct answer, per request
   let advanceTimer = null;
@@ -106,6 +113,13 @@
   /* ---------- helpers ---------- */
   function syncActionEnabled() {
     els.actionBtn.disabled = !trainer.hasSelection();
+  }
+
+  function applyStrength() {
+    const level = Number(els.nudgeStrength.value);
+    trainer.setWeakSpotStrength(STRENGTH_FACTORS[level] || STRENGTH_FACTORS[1]);
+    els.nudgeStrengthLabel.textContent = STRENGTH_LABELS[level] || STRENGTH_LABELS[1];
+    els.nudgeStrength.disabled = !els.nudgeWeak.checked;
   }
 
   function setLive(midi) {
@@ -220,6 +234,8 @@
         keyboardSize,
         autoAdvance: els.autoAdvance.checked,
         nudgeWeak: els.nudgeWeak.checked,
+        nudgeStrength: Number(els.nudgeStrength.value),
+        debug: els.debugWeights.checked,
         stats: { ...trainer.stats },
         combos,
         heatmapMode,
@@ -246,6 +262,15 @@
       if (typeof data.nudgeWeak === 'boolean') {
         els.nudgeWeak.checked = data.nudgeWeak;
         trainer.setWeakSpotWeighting(data.nudgeWeak);
+      }
+
+      if (data.nudgeStrength >= 1 && data.nudgeStrength <= 3) {
+        els.nudgeStrength.value = data.nudgeStrength;
+      }
+
+      if (typeof data.debug === 'boolean') {
+        els.debugWeights.checked = data.debug;
+        trainer.setDebug(data.debug);
       }
 
       if (data.mode === 'play' || data.mode === 'ear') {
@@ -558,6 +583,14 @@
 
   els.nudgeWeak.addEventListener('change', () => {
     trainer.setWeakSpotWeighting(els.nudgeWeak.checked);
+    applyStrength();
+    saveState();
+  });
+
+  els.nudgeStrength.addEventListener('input', () => { applyStrength(); saveState(); });
+
+  els.debugWeights.addEventListener('change', () => {
+    trainer.setDebug(els.debugWeights.checked);
     saveState();
   });
 
@@ -574,6 +607,8 @@
   // Sync the engine to the checkbox: a fresh visitor gets the default (on), while
   // loadState has already restored an explicit choice from a prior session.
   trainer.setWeakSpotWeighting(els.nudgeWeak.checked);
+  trainer.setDebug(els.debugWeights.checked);
+  applyStrength();
   syncActionEnabled();
   showIdlePrompt();
   renderStats();
