@@ -26,12 +26,15 @@
     autoAdvance: $('#autoAdvance'),
     resetBtn: $('#resetBtn'),
     sizeBtns: [...document.querySelectorAll('.size-btn')],
+    statsToggle: $('#statsToggle'),
+    heatmap: $('#heatmap'),
   };
 
   const AUTO_ADVANCE_MS = 1100; // ~1s after a correct answer, per request
   let advanceTimer = null;
   let retrying = false;
   let lastJudged = null; // { playedMidi, result } — kept so we can re-paint on a keyboard rebuild
+  let combos = {};
   const clearAdvance = () => { if (advanceTimer) { clearTimeout(advanceTimer); advanceTimer = null; } };
 
   // Play a prompt and deafen the mic for the playback window so the speakers
@@ -109,6 +112,54 @@
     els.statAccuracy.textContent = trainer.accuracy() + '%';
   }
 
+  function recordCombo(rootPc, semi, correct) {
+    const key = rootPc + ':' + semi;
+    if (!combos[key]) combos[key] = { a: 0, c: 0 };
+    combos[key].a++;
+    if (correct) combos[key].c++;
+  }
+
+  function renderHeatmap() {
+    const hm = els.heatmap;
+    if (!hm) return;
+    hm.innerHTML = '';
+
+    const corner = document.createElement('div');
+    corner.className = 'hm-corner';
+    hm.appendChild(corner);
+
+    for (let pc = 0; pc < 12; pc++) {
+      const cell = document.createElement('div');
+      cell.className = 'hm-col-head';
+      cell.textContent = theory.pcName(pc);
+      hm.appendChild(cell);
+    }
+
+    theory.INTERVALS.forEach((iv) => {
+      const rowHead = document.createElement('div');
+      rowHead.className = 'hm-row-head';
+      rowHead.textContent = iv.name;
+      hm.appendChild(rowHead);
+
+      for (let pc = 0; pc < 12; pc++) {
+        const cell = document.createElement('div');
+        cell.className = 'hm-cell';
+        const key = pc + ':' + iv.semi;
+        const entry = combos[key];
+        if (entry && entry.a > 0) {
+          const acc = entry.c / entry.a;
+          cell.style.background = 'hsl(' + Math.round(acc * 125) + ', 60%, 47%)';
+          cell.style.opacity = 0.35 + 0.65 * Math.min(entry.a, 5) / 5;
+        }
+        const a = entry ? entry.a : 0;
+        const c = entry ? entry.c : 0;
+        const acc = a ? c / a : 0;
+        cell.title = theory.pcName(pc) + ' × ' + iv.name + ' — ' + c + '/' + a + ' (' + Math.round(acc * 100) + '%)';
+        hm.appendChild(cell);
+      }
+    });
+  }
+
   const STORAGE_KEY = 'intervalTrainer.v1';
 
   function saveState() {
@@ -119,6 +170,7 @@
         keyboardSize,
         autoAdvance: els.autoAdvance.checked,
         stats: { ...trainer.stats },
+        combos,
       }));
     } catch (e) { /* silently ignore */ }
   }
@@ -155,6 +207,11 @@
 
       if (data.stats && typeof data.stats === 'object') {
         trainer.setStats(data.stats);
+      }
+
+      if (data.combos && typeof data.combos === 'object') {
+        combos = data.combos;
+        renderHeatmap();
       }
     } catch (e) { /* fall back to defaults */ }
   }
@@ -218,6 +275,8 @@
     if (!res) return;
     const q = res.question;
     lastJudged = { playedMidi, result: res.result };
+    recordCombo(q.rootPc, q.semi, res.result === 'correct');
+    renderHeatmap();
 
     piano.clear('is-active');
     piano.highlightPc(q.targetPc, 'is-target'); // the answer note, in every octave shown
@@ -389,7 +448,13 @@
     els.micBtn.disabled = false;
   });
 
-  els.resetBtn.addEventListener('click', () => { trainer.resetStats(); renderStats(); saveState(); });
+  els.resetBtn.addEventListener('click', () => { trainer.resetStats(); renderStats(); combos = {}; renderHeatmap(); saveState(); });
+
+  els.statsToggle.addEventListener('click', () => {
+    const hidden = els.heatmap.style.display === 'none';
+    els.heatmap.style.display = hidden ? '' : 'none';
+    els.statsToggle.textContent = hidden ? 'Hide' : 'Show';
+  });
 
   // Keyboard size: one octave (phone-friendly) vs the full range.
   els.sizeBtns.forEach((b) => {
@@ -417,6 +482,7 @@
   syncActionEnabled();
   showIdlePrompt();
   renderStats();
+  renderHeatmap();
   updateMidiUI('idle');
   input.initMIDI();
 

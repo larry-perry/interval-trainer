@@ -21,6 +21,9 @@ The big one — turn the app from "drill" into "see yourself improve."
 - **★ Accuracy per note × interval combo.** Track correct/attempts keyed by
   `(rootPc, interval)`. Show it as a 12×11 heatmap (root note vs interval) and/or
   a per-interval bar chart, so weak spots jump out. (Needs the persistence above.)
+- **★ Heatmap accuracy ↔ time toggle.** Switch the heatmap / per-combo view
+  between accuracy (correct %) and time-to-correct (average ms). Same grid,
+  two lenses on weakness.
 - **★ Time-to-correct-note.** Measure ms from prompt → correct note; show average
   and a trend. *Caveat:* for the mic, audio/detection latency would need a quick
   calibration step to keep the number honest (MIDI is exact).
@@ -34,6 +37,9 @@ The big one — turn the app from "drill" into "see yourself improve."
   you play *sounds* (★ "play a sound when you click a note after a wrong note"),
   and when you finally hit the right one it **auto-advances without scoring it
   correct** (★). Turns a miss into a guided correction instead of a dead end.
+- **★ Slight weak-spot weighting option.** When enabled, incorrectly answered
+  or slow-to-answer `(note, interval)` combos appear *very slightly* more often
+  in the pool — not a hard focus mode, just a gentle nudge. Off by default.
 - **Adaptive practice.** Weight questions toward your weak `(note, interval)`
   combos using the tracked data; a "drill my weak spots" toggle.
 - **Quiz/session mode.** Fixed length (10/20/50), with a final score screen.
