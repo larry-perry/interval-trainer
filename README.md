@@ -1,5 +1,7 @@
 # Interval Trainer
 
+> **Entirely vibe coded.** This project was built through conversations with an AI coding agent (Claude), not by sitting down and typing out every line by hand. The ideas, design direction, and musical scope are human; the commits are a collaboration.
+
 Practice musical intervals on your **real piano**. The app prompts an interval,
 you play it, and it tells you if you got it right — reading the note you played
 from **USB MIDI**, the **microphone** (coming next), or the **on-screen keyboard**.
