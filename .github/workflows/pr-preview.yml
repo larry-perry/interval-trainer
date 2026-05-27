@@ -1,0 +1,29 @@
+name: PR preview
+
+# Publishes a temporary GitHub Pages preview for every pull request at
+#   https://<owner>.github.io/<repo>/pr-preview/pr-<number>/
+# and tears it down automatically when the PR is closed or merged.
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+
+# Serialize runs per PR so rapid pushes don't race each other.
+concurrency: preview-${{ github.ref }}
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write       # push the preview onto the gh-pages branch
+      pull-requests: write  # post the preview link as a PR comment
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Deploys on opened/reopened/synchronize, cleans up on closed.
+      # The site is plain static files, so the repo root is the source.
+      - name: Deploy / clean up preview
+        uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: ./

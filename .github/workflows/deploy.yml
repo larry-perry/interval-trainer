@@ -1,0 +1,26 @@
+name: Deploy site
+
+# Publishes the production site to the gh-pages branch root on every push to
+# main. clean-exclude keeps the pr-preview/ directory so open PR previews
+# (see pr-preview.yml) are not wiped out by a production deploy.
+
+on:
+  push:
+    branches: [main]
+
+concurrency: preview-${{ github.ref }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: .
+          clean-exclude: pr-preview/
