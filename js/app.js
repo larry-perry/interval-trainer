@@ -74,6 +74,7 @@
       btn.classList.toggle('active');
       trainer.setSelected(selected);
       syncActionEnabled();
+      saveState();
     });
     els.intervalSelector.appendChild(btn);
   });
@@ -85,6 +86,7 @@
       els.modeBtns.forEach((x) => x.classList.toggle('active', x === b));
       trainer.setMode(b.dataset.mode);
       if (trainer.phase === 'idle') showIdlePrompt();
+      saveState();
     });
   });
 
@@ -104,6 +106,56 @@
     els.statWrong.textContent = s.wrong;
     els.statStreak.textContent = s.streak;
     els.statAccuracy.textContent = trainer.accuracy() + '%';
+  }
+
+  const STORAGE_KEY = 'intervalTrainer.v1';
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        selectedSemis: [...selected],
+        mode: trainer.mode,
+        keyboardSize,
+        autoAdvance: els.autoAdvance.checked,
+        stats: { ...trainer.stats },
+      }));
+    } catch (e) { /* silently ignore */ }
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+
+      if (Array.isArray(data.selectedSemis)) {
+        data.selectedSemis.forEach((s) => selected.add(s));
+        trainer.setSelected(selected);
+        els.intervalSelector.querySelectorAll('.interval-btn').forEach((btn) => {
+          btn.classList.toggle('active', selected.has(Number(btn.dataset.semi)));
+        });
+        syncActionEnabled();
+      }
+
+      if (data.mode === 'play' || data.mode === 'ear') {
+        trainer.setMode(data.mode);
+        els.modeBtns.forEach((b) => b.classList.toggle('active', b.dataset.mode === data.mode));
+      }
+
+      if (data.keyboardSize === 'octave' || data.keyboardSize === 'full') {
+        keyboardSize = data.keyboardSize;
+        buildPiano();
+        els.sizeBtns.forEach((b) => b.classList.toggle('active', b.dataset.size === keyboardSize));
+      }
+
+      if (typeof data.autoAdvance === 'boolean') {
+        els.autoAdvance.checked = data.autoAdvance;
+      }
+
+      if (data.stats && typeof data.stats === 'object') {
+        trainer.setStats(data.stats);
+      }
+    } catch (e) { /* fall back to defaults */ }
   }
 
   function showIdlePrompt() {
@@ -192,6 +244,7 @@
       if (els.autoAdvance.checked) advanceTimer = setTimeout(startQuestion, AUTO_ADVANCE_MS);
     }
     renderStats();
+    saveState();
   }
 
   /* ---------- input events ---------- */
@@ -306,7 +359,7 @@
     els.micBtn.disabled = false;
   });
 
-  els.resetBtn.addEventListener('click', () => { trainer.resetStats(); renderStats(); });
+  els.resetBtn.addEventListener('click', () => { trainer.resetStats(); renderStats(); saveState(); });
 
   // Keyboard size: one octave (phone-friendly) vs the full range.
   els.sizeBtns.forEach((b) => {
@@ -316,8 +369,11 @@
       els.sizeBtns.forEach((x) => x.classList.toggle('active', x === b));
       buildPiano();
       refreshHighlights();
+      saveState();
     });
   });
+
+  els.autoAdvance.addEventListener('change', saveState);
 
   // Spacebar = Start/Next, R = replay.
   document.addEventListener('keydown', (e) => {
@@ -327,6 +383,7 @@
   });
 
   /* ---------- boot ---------- */
+  loadState();
   syncActionEnabled();
   showIdlePrompt();
   renderStats();

@@ -31,6 +31,15 @@
       stats.correct = stats.wrong = stats.streak = stats.best = stats.total = 0;
     }
 
+    function setStats(obj) {
+      if (!obj) return;
+      stats.correct = Number.isFinite(obj.correct) ? obj.correct : stats.correct;
+      stats.wrong  = Number.isFinite(obj.wrong)  ? obj.wrong  : stats.wrong;
+      stats.streak = Number.isFinite(obj.streak) ? obj.streak : stats.streak;
+      stats.best   = Number.isFinite(obj.best)   ? obj.best   : stats.best;
+      stats.total  = Number.isFinite(obj.total)  ? obj.total  : stats.total;
+    }
+
     function next() {
       if (!hasSelection()) return null;
       const semis = [...selected];
@@ -81,7 +90,7 @@
     const accuracy = () => (stats.total ? Math.round((stats.correct / stats.total) * 100) : 0);
 
     return {
-      setMode, setSelected, hasSelection, resetStats, next, answer, accuracy,
+      setMode, setSelected, hasSelection, resetStats, setStats, next, answer, accuracy,
       get mode() { return mode; },
       get phase() { return phase; },
       get question() { return question; },
