@@ -31,6 +31,9 @@
     heatmapLabel: $('#heatmapLabel'),
     hmModeBtns: [...document.querySelectorAll('.hm-mode-btn')],
     nudgeWeak: $('#nudgeWeak'),
+    settingsBtn: $('#settingsBtn'),
+    settingsModal: $('#settingsModal'),
+    settingsClose: $('#settingsClose'),
   };
 
   const AUTO_ADVANCE_MS = 1100; // ~1s after a correct answer, per request
@@ -543,6 +546,14 @@
     });
   });
 
+  // Settings modal: open/close. Escape-to-close is handled natively by <dialog>;
+  // a click on the backdrop (target is the dialog itself) closes it too.
+  els.settingsBtn.addEventListener('click', () => els.settingsModal.showModal());
+  els.settingsClose.addEventListener('click', () => els.settingsModal.close());
+  els.settingsModal.addEventListener('click', (e) => {
+    if (e.target === els.settingsModal) els.settingsModal.close();
+  });
+
   els.autoAdvance.addEventListener('change', saveState);
 
   els.nudgeWeak.addEventListener('change', () => {
@@ -552,6 +563,7 @@
 
   // Spacebar = Start/Next, R = replay.
   document.addEventListener('keydown', (e) => {
+    if (els.settingsModal.open) return;
     if (e.target.tagName === 'SELECT') return;
     if (e.code === 'Space') { e.preventDefault(); if (!els.actionBtn.disabled) els.actionBtn.click(); }
     else if (e.key === 'r' || e.key === 'R') els.replayBtn.click();
