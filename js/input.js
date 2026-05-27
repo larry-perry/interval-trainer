@@ -180,7 +180,6 @@
 
     return {
       on,
-      emit,                 // exposed so other sources (e.g. mic) can publish notes
       midiSupported,
       initMIDI,
       initMic,
