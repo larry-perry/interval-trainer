@@ -61,6 +61,7 @@
   let keyboardSize = 'octave';
   let piano;
   function buildPiano() {
+    if (piano && piano.destroy) piano.destroy();
     piano = createPiano(els.pianoWrapper, {
       ...RANGES[keyboardSize],
       onPlay: (midi) => { audio.ensure(); input.feedScreenNote(midi); },

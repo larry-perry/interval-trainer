@@ -81,6 +81,10 @@
     fit();
     window.addEventListener('resize', fit);
 
+    function destroy() {
+      window.removeEventListener('resize', fit);
+    }
+
     const STATE_CLASSES = ['is-root', 'is-correct', 'is-wrong', 'is-active', 'is-target'];
 
     function highlight(midi, cls) {
@@ -118,7 +122,7 @@
       return keyByMidi.has(midi);
     }
 
-    return { element: piano, highlight, highlightPc, unhighlight, clear, flash, flashPc, fit, has, low, high };
+    return { element: piano, highlight, highlightPc, unhighlight, clear, flash, flashPc, fit, has, low, high, destroy };
   }
 
   App.createPiano = createPiano;
