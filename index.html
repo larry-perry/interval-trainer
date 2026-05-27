@@ -78,7 +78,11 @@
 
     <section class="stats-panel" style="--d:7">
       <div class="keyboard-bar">
-        <span class="section-label">Accuracy — note × interval</span>
+        <span class="section-label" id="heatmapLabel">Accuracy — note × interval</span>
+        <div class="hm-mode-switch" role="group" aria-label="Heatmap mode">
+          <button class="hm-mode-btn active" data-mode="accuracy" type="button">Accuracy</button>
+          <button class="hm-mode-btn" data-mode="time" type="button">Time</button>
+        </div>
         <button class="ghost-btn" id="statsToggle" type="button">Hide</button>
       </div>
       <div class="heatmap" id="heatmap"></div>

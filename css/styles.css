@@ -515,6 +515,31 @@ body {
 }
 
 .stats-panel { margin-top: 0.4rem; }
+.hm-mode-switch {
+  display: inline-flex;
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  padding: 3px;
+  flex: none;
+}
+.hm-mode-btn {
+  font-family: var(--ui);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink-dim);
+  background: transparent;
+  border: none;
+  padding: 0.32rem 0.7rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+.hm-mode-btn.active {
+  color: var(--teal-deep);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
 .heatmap {
   display: grid;
   grid-template-columns: auto repeat(12, 1fr);

@@ -28,6 +28,8 @@
     sizeBtns: [...document.querySelectorAll('.size-btn')],
     statsToggle: $('#statsToggle'),
     heatmap: $('#heatmap'),
+    heatmapLabel: $('#heatmapLabel'),
+    hmModeBtns: [...document.querySelectorAll('.hm-mode-btn')],
   };
 
   const AUTO_ADVANCE_MS = 1100; // ~1s after a correct answer, per request
@@ -35,6 +37,8 @@
   let retrying = false;
   let lastJudged = null; // { playedMidi, result } — kept so we can re-paint on a keyboard rebuild
   let combos = {};
+  let questionStartTime = 0;
+  let heatmapMode = 'accuracy';
   const clearAdvance = () => { if (advanceTimer) { clearTimeout(advanceTimer); advanceTimer = null; } };
 
   // Play a prompt and deafen the mic for the playback window so the speakers
@@ -112,11 +116,17 @@
     els.statAccuracy.textContent = trainer.accuracy() + '%';
   }
 
-  function recordCombo(rootPc, semi, correct) {
+  function recordCombo(rootPc, semi, correct, ms) {
     const key = rootPc + ':' + semi;
-    if (!combos[key]) combos[key] = { a: 0, c: 0 };
+    if (!combos[key]) combos[key] = { a: 0, c: 0, t: 0, n: 0 };
     combos[key].a++;
-    if (correct) combos[key].c++;
+    if (correct) {
+      combos[key].c++;
+      if (typeof ms === 'number') {
+        combos[key].t += ms;
+        combos[key].n++;
+      }
+    }
   }
 
   function renderHeatmap() {
@@ -135,6 +145,11 @@
       hm.appendChild(cell);
     }
 
+    const isTime = heatmapMode === 'time';
+    if (els.heatmapLabel) {
+      els.heatmapLabel.textContent = isTime ? 'Speed — note × interval' : 'Accuracy — note × interval';
+    }
+
     theory.INTERVALS.forEach((iv) => {
       const rowHead = document.createElement('div');
       rowHead.className = 'hm-row-head';
@@ -146,15 +161,34 @@
         cell.className = 'hm-cell';
         const key = pc + ':' + iv.semi;
         const entry = combos[key];
-        if (entry && entry.a > 0) {
-          const acc = entry.c / entry.a;
-          cell.style.background = 'hsl(' + Math.round(acc * 125) + ', 60%, 47%)';
-          cell.style.opacity = 0.35 + 0.65 * Math.min(entry.a, 5) / 5;
-        }
         const a = entry ? entry.a : 0;
         const c = entry ? entry.c : 0;
-        const acc = a ? c / a : 0;
-        cell.title = theory.pcName(pc) + ' × ' + iv.name + ' — ' + c + '/' + a + ' (' + Math.round(acc * 100) + '%)';
+
+        if (entry && entry.a > 0) {
+          if (isTime) {
+            if (entry.n > 0) {
+              const avg = entry.t / entry.n;
+              const hue = Math.max(0, 125 - Math.round((avg / 3000) * 125));
+              cell.style.background = 'hsl(' + hue + ', 60%, 47%)';
+            }
+            cell.style.opacity = 0.35 + 0.65 * Math.min(entry.a, 5) / 5;
+          } else {
+            const acc = entry.c / entry.a;
+            cell.style.background = 'hsl(' + Math.round(acc * 125) + ', 60%, 47%)';
+            cell.style.opacity = 0.35 + 0.65 * Math.min(entry.a, 5) / 5;
+          }
+        }
+
+        if (isTime) {
+          const n = entry ? entry.n : 0;
+          const avg = n > 0 ? Math.round(entry.t / n) : 0;
+          const label = n > 0 ? avg + 'ms' : '—';
+          cell.title = theory.pcName(pc) + ' × ' + iv.name + ' — ' + label + ' (' + c + '/' + a + ')';
+        } else {
+          const acc = a ? c / a : 0;
+          cell.title = theory.pcName(pc) + ' × ' + iv.name + ' — ' + c + '/' + a + ' (' + Math.round(acc * 100) + '%)';
+        }
+
         hm.appendChild(cell);
       }
     });
@@ -171,6 +205,7 @@
         autoAdvance: els.autoAdvance.checked,
         stats: { ...trainer.stats },
         combos,
+        heatmapMode,
       }));
     } catch (e) { /* silently ignore */ }
   }
@@ -213,6 +248,11 @@
         combos = data.combos;
         renderHeatmap();
       }
+
+      if (data.heatmapMode === 'accuracy' || data.heatmapMode === 'time') {
+        heatmapMode = data.heatmapMode;
+        els.hmModeBtns.forEach((b) => b.classList.toggle('active', b.dataset.mode === heatmapMode));
+      }
     } catch (e) { /* fall back to defaults */ }
   }
 
@@ -245,6 +285,7 @@
     lastJudged = null;
     const q = trainer.next();
     if (!q) return;
+    questionStartTime = Date.now();
     audio.ensure();
     piano.clear();
     piano.highlightPc(q.rootPc, 'is-root');
@@ -275,7 +316,8 @@
     if (!res) return;
     const q = res.question;
     lastJudged = { playedMidi, result: res.result };
-    recordCombo(q.rootPc, q.semi, res.result === 'correct');
+    const ms = res.result === 'correct' ? Date.now() - questionStartTime : undefined;
+    recordCombo(q.rootPc, q.semi, res.result === 'correct', ms);
     renderHeatmap();
 
     piano.clear('is-active');
@@ -454,6 +496,16 @@
     const hidden = els.heatmap.style.display === 'none';
     els.heatmap.style.display = hidden ? '' : 'none';
     els.statsToggle.textContent = hidden ? 'Hide' : 'Show';
+  });
+
+  els.hmModeBtns.forEach((b) => {
+    b.addEventListener('click', () => {
+      if (b.dataset.mode === heatmapMode) return;
+      heatmapMode = b.dataset.mode;
+      els.hmModeBtns.forEach((x) => x.classList.toggle('active', x.dataset.mode === heatmapMode));
+      renderHeatmap();
+      saveState();
+    });
   });
 
   // Keyboard size: one octave (phone-friendly) vs the full range.
