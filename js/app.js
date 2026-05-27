@@ -30,6 +30,7 @@
 
   const AUTO_ADVANCE_MS = 1100; // ~1s after a correct answer, per request
   let advanceTimer = null;
+  let retrying = false;
   let lastJudged = null; // { playedMidi, result } — kept so we can re-paint on a keyboard rebuild
   const clearAdvance = () => { if (advanceTimer) { clearTimeout(advanceTimer); advanceTimer = null; } };
 
@@ -183,6 +184,7 @@
   /* ---------- question flow ---------- */
   function startQuestion() {
     clearAdvance();
+    retrying = false;
     lastJudged = null;
     const q = trainer.next();
     if (!q) return;
@@ -228,13 +230,16 @@
       : '';
 
     if (res.result === 'wrong') {
+      retrying = true;
       els.prompt.className = 'prompt wrong';
       if (piano.has(playedMidi)) piano.highlight(playedMidi, 'is-wrong');
       els.prompt.innerHTML = `
         <div class="prompt-kicker">Not quite</div>
         <div class="prompt-result">The answer was <strong>${answerText}</strong>${nameReveal}.</div>
-        <div class="prompt-task muted">You played ${theory.midiName(playedMidi)}.</div>`;
+        <div class="prompt-task muted">You played ${theory.midiName(playedMidi)}.</div>
+        <div class="prompt-task muted">Find it on your piano.</div>`;
     } else {
+      retrying = false;
       els.prompt.className = 'prompt correct';
       if (piano.has(playedMidi)) piano.highlight(playedMidi, 'is-correct');
       els.prompt.innerHTML = `
@@ -253,6 +258,31 @@
     setLive(midi);
     if (piano.has(midi)) piano.flash(midi, 'is-active');
     else piano.flashPc(theory.pitchClass(midi), 'is-active');
+    // After a miss: hunt for the right note. Found note confirms + advances (not scored).
+    if (trainer.phase === 'answered' && retrying) {
+      const q = trainer.question;
+      if (theory.pitchClass(midi) === q.targetPc) {
+        retrying = false;
+        clearAdvance();
+        piano.clear('is-active');
+        piano.highlightPc(q.targetPc, 'is-target');
+        if (piano.has(midi)) piano.highlight(midi, 'is-correct');
+        const answerText = q.answer.accurate
+          ? `${q.answer.display} <span class="muted">(more precisely ${q.answer.accurate})</span>`
+          : q.answer.display;
+        els.prompt.className = 'prompt correct';
+        els.prompt.innerHTML = `
+          <div class="prompt-kicker">There it is</div>
+          <div class="prompt-result"><strong>${answerText}</strong></div>`;
+        play(q, 'harmonic');
+        advanceTimer = setTimeout(startQuestion, 900);
+      } else if (source === 'screen') {
+        // sound the player's hunting taps (MIDI/mic already make real sound)
+        audio.playMidi(midi, 0, 0.5);
+        input.suppressMic(700);
+      }
+      return;
+    }
     if (trainer.phase !== 'awaiting') return;
 
     // Playing the root is "free" — any octave of it lets you orient without being
