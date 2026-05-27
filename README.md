@@ -15,9 +15,10 @@ concept, but instead of clicking the answer you play it on your instrument.
 - **Ear** — the interval is *played*, not named. Reproduce the note you hear;
   the name is revealed after you answer.
 
-Judging is lenient on octave: the right pitch class in any octave counts (you
-naturally land where it's comfortable on the keyboard), but an exact-octave hit
-is shown as such.
+Judging is by **pitch class** — the right note in *any* octave is correct ("which
+note," not "which octave"). The prompt sounds the interval in a random octave for
+ear variety, while you just play the right note name. The on-screen keyboard
+defaults to a single, phone-friendly octave, with a **1 octave / Full** toggle.
 
 **Playing the root is free** — it never counts as a mistake, so you can sound
 the root to orient yourself (handy in Ear mode). On-screen clicks of the root
@@ -77,10 +78,14 @@ js/app.js         wiring: DOM + trainer + audio + input
 
 ## Roadmap
 
+Done so far:
+
 - [x] Microphone pitch detection (autocorrelation) feeding the same input layer
 - [x] Auto-advance after a correct answer
 - [x] Playing the root is free (orient without penalty)
-- [ ] Tune mic detection against a real instrument (sensitivity, octave errors)
-- [ ] Descending / harmonic interval prompts
-- [ ] Per-interval accuracy breakdown and session history
-- [ ] Optional PWA / Capacitor wrapper for an installable mobile app
+- [x] Pitch-class model (any octave counts) with randomized prompt octaves
+- [x] Single-octave / full keyboard toggle; reset-score button
+
+Planned features and ideas live in **[ROADMAP.md](ROADMAP.md)** — including
+persistence, per-note/interval accuracy graphs, response-time tracking, a
+learn-from-the-miss loop, descending/harmonic intervals, and a PWA wrapper.

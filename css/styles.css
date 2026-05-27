@@ -339,6 +339,39 @@ body {
 
 /* ---------- piano ---------- */
 .keyboard { margin-top: 0.4rem; }
+.keyboard-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-bottom: 0.7rem;
+}
+.keyboard-bar .section-label { margin-bottom: 0; text-align: left; }
+.size-switch {
+  display: inline-flex;
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  padding: 3px;
+  flex: none;
+}
+.size-btn {
+  font-family: var(--ui);
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--ink-dim);
+  background: transparent;
+  border: none;
+  padding: 0.32rem 0.8rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+.size-btn.active {
+  color: var(--teal-deep);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
 .piano-wrapper {
   width: 100%;
   display: flex;
@@ -395,7 +428,11 @@ body {
   border-color: var(--teal);
   box-shadow: 0 0 12px rgba(15, 122, 110, 0.6);
 }
-.key.is-target { outline: 2.5px dashed var(--teal); outline-offset: -3px; z-index: 4; }
+/* Answer location on a miss. No z-index bump: a white key must stay BEHIND the
+   black keys, or it visually covers them ("the answer over the flats"). */
+.key.is-target { outline: 2.5px dashed var(--teal); outline-offset: -3px; }
+.key.white.is-target { background: linear-gradient(to bottom, #e6f5f1, #c9ece4); }
+.key.black.is-target { background: linear-gradient(to bottom, #195a52, #0c3c35); }
 .key.white.is-correct {
   background: linear-gradient(to bottom, #d7f3df, #aee3bd) !important;
   border-color: var(--green) !important;

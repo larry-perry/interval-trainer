@@ -1,22 +1,20 @@
 /* trainer.js — the practice engine (pure logic, no DOM or audio).
  *
- * Two modes share the same machinery — generate a question (root + interval),
- * wait for a played note, judge it:
- *   'play' : the interval is named; you must play the right note from theory.
- *   'ear'  : the interval is played, not named; you reproduce the note by ear,
- *            and the name is revealed afterwards.
+ * Pitch-class model: a question is a root pitch class + an interval. The answer
+ * is judged by pitch class ("which note", any octave). What you HEAR is decoupled
+ * from what you answer — the prompt sounds the real interval in a random octave
+ * (audioRootMidi / audioTargetMidi), while you just play the right note name.
  *
- * Judging is lenient on octave: the correct pitch class in any octave counts,
- * because on a real keyboard you naturally land in whatever octave is comfortable.
+ * Two modes share the machinery:
+ *   'play' : the interval is named; play the right note from theory.
+ *   'ear'  : the interval is played, not named; reproduce the note, name revealed after.
  */
 (function (App) {
   'use strict';
 
-  const { spellAbove, rootDisplayName, pitchClass, intervalBySemi } = App.theory;
+  const { randomRootName, spellName, pitchClass, intervalBySemi } = App.theory;
 
-  // Keep roots central so the target note stays on the on-screen keyboard (48–84).
-  const ROOT_MIN = 55; // G3
-  const ROOT_MAX = 67; // G4
+  const AUDIO_OCTAVES = [3, 4, 5]; // octaves the prompt may sound in, for ear variety
 
   function createTrainer() {
     let mode = 'play';
@@ -37,46 +35,46 @@
       if (!hasSelection()) return null;
       const semis = [...selected];
 
-      let rootMidi, semi, attempts = 0;
+      let rootPc, semi, attempts = 0;
       do {
         semi = semis[Math.floor(Math.random() * semis.length)];
-        rootMidi = ROOT_MIN + Math.floor(Math.random() * (ROOT_MAX - ROOT_MIN + 1));
+        rootPc = Math.floor(Math.random() * 12);
         attempts++;
-      } while (question && rootMidi === question.rootMidi && attempts < 40);
+      } while (question && rootPc === question.rootPc && attempts < 40);
 
-      const rootDisplay = rootDisplayName(rootMidi);
-      const answer = spellAbove(rootMidi, rootDisplay, semi);
+      const octave = AUDIO_OCTAVES[Math.floor(Math.random() * AUDIO_OCTAVES.length)];
+      const audioRootMidi = 12 * (octave + 1) + rootPc; // MIDI for pc in this octave
+      const rootDisplay = randomRootName(rootPc);
+
       question = {
-        rootMidi,
+        rootPc,
         semi,
-        targetMidi: rootMidi + semi,
+        targetPc: pitchClass(rootPc + semi),
+        audioRootMidi,
+        audioTargetMidi: audioRootMidi + semi,
         rootDisplay,
-        answer,                       // { display, accurate }
-        interval: intervalBySemi(semi), // { semi, name, label }
+        answer: spellName(rootDisplay, rootPc, semi), // { display, accurate } — no octave
+        interval: intervalBySemi(semi),
       };
       phase = 'awaiting';
       return question;
     }
 
-    // Judge a played note. Returns a result object, or null if not awaiting input.
+    // Judge a played note by pitch class. Returns a result, or null if not awaiting.
     function answer(playedMidi) {
       if (phase !== 'awaiting' || !question) return null;
       phase = 'answered';
 
-      const exact = playedMidi === question.targetMidi;
-      const samePc = pitchClass(playedMidi) === pitchClass(question.targetMidi);
-      const result = exact ? 'correct' : samePc ? 'octave' : 'wrong';
-
+      const result = pitchClass(playedMidi) === question.targetPc ? 'correct' : 'wrong';
       stats.total++;
-      if (result === 'wrong') {
-        stats.wrong++;
-        stats.streak = 0;
-      } else {
+      if (result === 'correct') {
         stats.correct++;
         stats.streak++;
         if (stats.streak > stats.best) stats.best = stats.streak;
+      } else {
+        stats.wrong++;
+        stats.streak = 0;
       }
-
       return { result, playedMidi, question };
     }
 

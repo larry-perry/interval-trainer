@@ -24,17 +24,20 @@
     midiText: $('#midiText'),
     micBtn: $('#micBtn'),
     autoAdvance: $('#autoAdvance'),
+    resetBtn: $('#resetBtn'),
+    sizeBtns: [...document.querySelectorAll('.size-btn')],
   };
 
   const AUTO_ADVANCE_MS = 1100; // ~1s after a correct answer, per request
   let advanceTimer = null;
+  let lastJudged = null; // { playedMidi, result } — kept so we can re-paint on a keyboard rebuild
   const clearAdvance = () => { if (advanceTimer) { clearTimeout(advanceTimer); advanceTimer = null; } };
 
   // Play a prompt and deafen the mic for the playback window so the speakers
-  // aren't mistaken for the player. Durations cover note + release tails.
+  // aren't mistaken for the player. The prompt sounds in its randomized octave.
   const SUPPRESS = { root: 1000, melodic: 1700, harmonic: 1400 };
   function play(q, style) {
-    audio.playInterval(q.rootMidi, q.semi, style);
+    audio.playInterval(q.audioRootMidi, q.semi, style);
     input.suppressMic(SUPPRESS[style] || 1000);
   }
 
@@ -42,10 +45,19 @@
   const input = createInputManager();
   const selected = new Set(); // nothing selected by default — the player chooses
 
-  const piano = createPiano(els.pianoWrapper, {
-    low: 48, high: 84,
-    onPlay: (midi) => { audio.ensure(); input.feedScreenNote(midi); },
-  });
+  // The on-screen keyboard is rebuildable so it can switch between one octave
+  // (phone-friendly) and the full range. Reassigning `piano` updates every
+  // closure below that references it.
+  const RANGES = { octave: { low: 60, high: 72 }, full: { low: 48, high: 84 } };
+  let keyboardSize = 'octave';
+  let piano;
+  function buildPiano() {
+    piano = createPiano(els.pianoWrapper, {
+      ...RANGES[keyboardSize],
+      onPlay: (midi) => { audio.ensure(); input.feedScreenNote(midi); },
+    });
+  }
+  buildPiano();
 
   /* ---------- interval selector ---------- */
   theory.INTERVALS.forEach((iv) => {
@@ -102,14 +114,29 @@
       <div class="prompt-idle">${verb}.<br>Pick intervals below and press <strong>Start</strong>.</div>`;
   }
 
+  // Repaint key highlights for the current question/phase (used after a rebuild too).
+  function refreshHighlights() {
+    piano.clear();
+    const q = trainer.question;
+    if (!q) return;
+    piano.highlightPc(q.rootPc, 'is-root');
+    if (trainer.phase === 'answered') {
+      piano.highlightPc(q.targetPc, 'is-target');
+      if (lastJudged && piano.has(lastJudged.playedMidi)) {
+        piano.highlight(lastJudged.playedMidi, lastJudged.result === 'correct' ? 'is-correct' : 'is-wrong');
+      }
+    }
+  }
+
   /* ---------- question flow ---------- */
   function startQuestion() {
     clearAdvance();
+    lastJudged = null;
     const q = trainer.next();
     if (!q) return;
     audio.ensure();
     piano.clear();
-    if (piano.has(q.rootMidi)) piano.highlight(q.rootMidi, 'is-root');
+    piano.highlightPc(q.rootPc, 'is-root');
 
     if (trainer.mode === 'ear') {
       els.prompt.className = 'prompt';
@@ -136,9 +163,10 @@
     const res = trainer.answer(playedMidi);
     if (!res) return;
     const q = res.question;
+    lastJudged = { playedMidi, result: res.result };
 
     piano.clear('is-active');
-    if (piano.has(q.targetMidi)) piano.highlight(q.targetMidi, 'is-target');
+    piano.highlightPc(q.targetPc, 'is-target'); // the answer note, in every octave shown
 
     const answerText = q.answer.accurate
       ? `${q.answer.display} <span class="muted">(more precisely ${q.answer.accurate})</span>`
@@ -157,12 +185,9 @@
     } else {
       els.prompt.className = 'prompt correct';
       if (piano.has(playedMidi)) piano.highlight(playedMidi, 'is-correct');
-      const octaveNote = res.result === 'octave'
-        ? ' <span class="muted">(right note, different octave)</span>'
-        : '';
       els.prompt.innerHTML = `
         <div class="prompt-kicker">Correct</div>
-        <div class="prompt-result"><strong>${answerText}</strong>${nameReveal}${octaveNote}</div>`;
+        <div class="prompt-result"><strong>${answerText}</strong>${nameReveal}</div>`;
       play(q, 'harmonic');
       if (els.autoAdvance.checked) advanceTimer = setTimeout(startQuestion, AUTO_ADVANCE_MS);
     }
@@ -173,16 +198,14 @@
   input.on('noteon', ({ midi, source }) => {
     audio.ensure();
     setLive(midi);
-    piano.flash(midi, 'is-active');
+    if (piano.has(midi)) piano.flash(midi, 'is-active');
+    else piano.flashPc(theory.pitchClass(midi), 'is-active');
     if (trainer.phase !== 'awaiting') return;
 
-    // Playing the root is "free" — it lets you orient without being judged.
-    // For the octave (P8) the target shares the root's pitch class, so only the
-    // exact root note is free there; otherwise any octave of the root counts.
+    // Playing the root is "free" — any octave of it lets you orient without being
+    // judged. (No interval here lands on the root's own pitch class, so this is safe.)
     const q = trainer.question;
-    const isRoot = midi === q.rootMidi ||
-      (q.semi !== 12 && theory.pitchClass(midi) === theory.pitchClass(q.rootMidi));
-    if (isRoot) {
+    if (theory.pitchClass(midi) === q.rootPc) {
       if (source === 'screen') { audio.playMidi(midi, 0, 0.5); input.suppressMic(700); }
       return;
     }
@@ -283,6 +306,19 @@
     els.micBtn.disabled = false;
   });
 
+  els.resetBtn.addEventListener('click', () => { trainer.resetStats(); renderStats(); });
+
+  // Keyboard size: one octave (phone-friendly) vs the full range.
+  els.sizeBtns.forEach((b) => {
+    b.addEventListener('click', () => {
+      if (b.dataset.size === keyboardSize) return;
+      keyboardSize = b.dataset.size;
+      els.sizeBtns.forEach((x) => x.classList.toggle('active', x === b));
+      buildPiano();
+      refreshHighlights();
+    });
+  });
+
   // Spacebar = Start/Next, R = replay.
   document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'SELECT') return;
@@ -298,5 +334,5 @@
   input.initMIDI();
 
   // Debug handle: inspect/drive the live instances from the console or tests.
-  App._debug = { trainer, input, piano, selected };
+  App._debug = { trainer, input, selected, get piano() { return piano; } };
 })(window.App = window.App || {});

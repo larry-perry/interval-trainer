@@ -87,6 +87,10 @@
       const el = keyByMidi.get(midi);
       if (el) el.classList.add(cls);
     }
+    // Light every key of a pitch class — in the pitch-class model any octave counts.
+    function highlightPc(pc, cls) {
+      keyByMidi.forEach((el, m) => { if (App.theory.pitchClass(m) === pc) el.classList.add(cls); });
+    }
     function unhighlight(midi, cls) {
       const el = keyByMidi.get(midi);
       if (el) el.classList.remove(cls);
@@ -102,11 +106,19 @@
       el.classList.add(cls);
       setTimeout(() => el.classList.remove(cls), ms);
     }
+    // Echo a played note by name when its exact octave isn't on the keyboard.
+    function flashPc(pc, cls = 'is-active', ms = 260) {
+      keyByMidi.forEach((el, m) => {
+        if (App.theory.pitchClass(m) !== pc) return;
+        el.classList.add(cls);
+        setTimeout(() => el.classList.remove(cls), ms);
+      });
+    }
     function has(midi) {
       return keyByMidi.has(midi);
     }
 
-    return { element: piano, highlight, unhighlight, clear, flash, fit, has, low, high };
+    return { element: piano, highlight, highlightPc, unhighlight, clear, flash, flashPc, fit, has, low, high };
   }
 
   App.createPiano = createPiano;

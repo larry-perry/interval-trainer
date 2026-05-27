@@ -52,6 +52,7 @@
     <section class="actions" style="--d:4">
       <button class="primary-btn" id="actionBtn" type="button">Start</button>
       <button class="ghost-btn" id="replayBtn" type="button" disabled>Replay&nbsp;⟳</button>
+      <button class="ghost-btn" id="resetBtn" type="button">Reset score</button>
       <label class="switch" title="Automatically move to the next note ~1s after a correct answer">
         <input type="checkbox" id="autoAdvance" checked />
         <span class="switch-track"><span class="switch-thumb"></span></span>
@@ -65,6 +66,13 @@
     </section>
 
     <section class="keyboard" style="--d:6">
+      <div class="keyboard-bar">
+        <span class="section-label">Tap, or play on your piano</span>
+        <div class="size-switch" role="group" aria-label="Keyboard size">
+          <button class="size-btn active" data-size="octave" type="button">1 octave</button>
+          <button class="size-btn" data-size="full" type="button">Full</button>
+        </div>
+      </div>
       <div class="piano-wrapper" id="pianoWrapper"></div>
     </section>
 
