@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interval Trainer — play it on your piano</title>
+  <meta name="description" content="Practice musical intervals on your real piano, detected via USB MIDI, microphone, or the on-screen keyboard." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230f7a6e'/><circle cx='12' cy='22' r='4.3' fill='%23fff'/><rect x='15.4' y='7.5' width='2' height='14.5' fill='%23fff'/><path d='M15.4 7.5 q6 1 6 5 q-3-3-6-2 z' fill='%23fff'/></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&family=Fragment+Mono:ital@0;1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <main class="page">
+
+    <header class="masthead">
+      <h1>Interval <em>Trainer</em></h1>
+      <p class="tagline">Practice intervals on your real piano — by name or by ear. Played notes are read from USB&nbsp;MIDI, the&nbsp;mic, or the keys below.</p>
+    </header>
+
+    <section class="controls" style="--d:1">
+      <div class="mode-switch" role="tablist" aria-label="Practice mode">
+        <button class="mode-btn active" data-mode="play" role="tab">Reading</button>
+        <button class="mode-btn" data-mode="ear" role="tab">Ear</button>
+      </div>
+      <div class="io">
+        <div class="midi-status" title="USB MIDI input">
+          <span class="dot" id="midiDot"></span>
+          <span id="midiText">Connecting…</span>
+          <select id="midiSelect" aria-label="MIDI input device" style="display:none"></select>
+        </div>
+        <button class="ghost-btn" id="micBtn" type="button">Use microphone</button>
+      </div>
+    </section>
+
+    <section class="stage" style="--d:2">
+      <div class="readout" aria-live="polite">
+        <div class="readout-note" id="liveNote">—</div>
+        <div class="readout-label" id="liveLabel">waiting for a note</div>
+      </div>
+      <div class="prompt" id="prompt"></div>
+    </section>
+
+    <section class="stats" style="--d:3">
+      <div class="stat"><span class="stat-num" id="statCorrect">0</span><span class="stat-key">correct</span></div>
+      <div class="stat"><span class="stat-num" id="statWrong">0</span><span class="stat-key">missed</span></div>
+      <div class="stat"><span class="stat-num" id="statStreak">0</span><span class="stat-key">streak</span></div>
+      <div class="stat"><span class="stat-num" id="statAccuracy">0%</span><span class="stat-key">accuracy</span></div>
+    </section>
+
+    <section class="actions" style="--d:4">
+      <button class="primary-btn" id="actionBtn" type="button">Start</button>
+      <button class="ghost-btn" id="replayBtn" type="button" disabled>Replay&nbsp;⟳</button>
+      <label class="switch" title="Automatically move to the next note ~1s after a correct answer">
+        <input type="checkbox" id="autoAdvance" checked />
+        <span class="switch-track"><span class="switch-thumb"></span></span>
+        <span class="switch-text">Auto-advance</span>
+      </label>
+    </section>
+
+    <section class="intervals" style="--d:5">
+      <div class="section-label">Intervals to practice</div>
+      <div class="interval-selector" id="intervalSelector"></div>
+    </section>
+
+    <section class="keyboard" style="--d:6">
+      <div class="piano-wrapper" id="pianoWrapper"></div>
+    </section>
+
+    <footer class="foot">
+      Built on the interval-trainer idea by TuTempo Academia Musical — now it listens to the note you actually play.
+    </footer>
+
+  </main>
+
+  <script src="js/theory.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/pitch.js"></script>
+  <script src="js/piano.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/trainer.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
