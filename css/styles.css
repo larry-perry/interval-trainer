@@ -562,6 +562,85 @@ body {
   border: 1px solid var(--line-soft);
 }
 
+/* ---------- settings button + modal ---------- */
+.icon-text-btn { display: inline-flex; align-items: center; gap: 0.4rem; }
+.icon-text-btn svg { flex: none; }
+
+.settings-modal {
+  position: fixed;
+  inset: 0;
+  margin: auto; /* re-center: the global `* { margin: 0 }` reset kills the UA centering */
+  width: min(440px, calc(100vw - 2rem));
+  height: fit-content;
+  max-height: calc(100vh - 2rem);
+  border: none;
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+}
+.settings-modal::backdrop {
+  background: rgba(34, 31, 26, 0.42);
+  backdrop-filter: blur(2px);
+}
+.settings-modal[open] { animation: modalpop 0.2s cubic-bezier(0.2, 0.7, 0.2, 1); }
+@keyframes modalpop {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+.settings-inner {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+.settings-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.3rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+.settings-head h2 {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: 1.4rem;
+  letter-spacing: -0.01em;
+}
+.settings-close {
+  font-family: var(--ui);
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--ink-dim);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  width: 2rem; height: 2rem;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+}
+.settings-close:hover { border-color: var(--teal); color: var(--teal-deep); }
+.settings-body { padding: 0.4rem 1.3rem 1.2rem; }
+.setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.2rem;
+  padding: 1rem 0;
+  cursor: pointer;
+  border-bottom: 1px solid var(--line-soft);
+}
+.setting:last-child { border-bottom: none; }
+.setting-info { display: flex; flex-direction: column; gap: 0.2rem; }
+.setting-name { font-size: 0.95rem; font-weight: 600; color: var(--ink); }
+.setting-desc { font-size: 0.8rem; color: var(--ink-dim); line-height: 1.4; }
+.setting .switch { flex: none; }
+
 /* ---------- responsive ---------- */
 @media (max-width: 560px) {
   .stage { grid-template-columns: 1fr; }
