@@ -275,7 +275,7 @@
           <div class="prompt-kicker">There it is</div>
           <div class="prompt-result"><strong>${answerText}</strong></div>`;
         play(q, 'harmonic');
-        advanceTimer = setTimeout(startQuestion, 900);
+        if (els.autoAdvance.checked) advanceTimer = setTimeout(startQuestion, 900);
       } else if (source === 'screen') {
         // sound the player's hunting taps (MIDI/mic already make real sound)
         audio.playMidi(midi, 0, 0.5);
