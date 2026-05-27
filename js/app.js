@@ -30,6 +30,7 @@
     heatmap: $('#heatmap'),
     heatmapLabel: $('#heatmapLabel'),
     hmModeBtns: [...document.querySelectorAll('.hm-mode-btn')],
+    nudgeWeak: $('#nudgeWeak'),
   };
 
   const AUTO_ADVANCE_MS = 1100; // ~1s after a correct answer, per request
@@ -203,6 +204,7 @@
         mode: trainer.mode,
         keyboardSize,
         autoAdvance: els.autoAdvance.checked,
+        nudgeWeak: els.nudgeWeak.checked,
         stats: { ...trainer.stats },
         combos,
         heatmapMode,
@@ -219,10 +221,16 @@
       if (Array.isArray(data.selectedSemis)) {
         data.selectedSemis.forEach((s) => selected.add(s));
         trainer.setSelected(selected);
+        trainer.setCombos(combos);
         els.intervalSelector.querySelectorAll('.interval-btn').forEach((btn) => {
           btn.classList.toggle('active', selected.has(Number(btn.dataset.semi)));
         });
         syncActionEnabled();
+      }
+
+      if (typeof data.nudgeWeak === 'boolean') {
+        els.nudgeWeak.checked = data.nudgeWeak;
+        trainer.setWeakSpotWeighting(data.nudgeWeak);
       }
 
       if (data.mode === 'play' || data.mode === 'ear') {
@@ -521,6 +529,11 @@
   });
 
   els.autoAdvance.addEventListener('change', saveState);
+
+  els.nudgeWeak.addEventListener('change', () => {
+    trainer.setWeakSpotWeighting(els.nudgeWeak.checked);
+    saveState();
+  });
 
   // Spacebar = Start/Next, R = replay.
   document.addEventListener('keydown', (e) => {
