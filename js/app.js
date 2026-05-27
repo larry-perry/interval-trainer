@@ -130,6 +130,15 @@
     }
   }
 
+  function recordTime(rootPc, semi, ms) {
+    const key = rootPc + ':' + semi;
+    if (!combos[key]) combos[key] = { a: 0, c: 0, t: 0, n: 0 };
+    if (typeof ms === 'number') {
+      combos[key].t += ms;
+      combos[key].n++;
+    }
+  }
+
   function renderHeatmap() {
     const hm = els.heatmap;
     if (!hm) return;
@@ -385,6 +394,9 @@
         els.prompt.innerHTML = `
           <div class="prompt-kicker">There it is</div>
           <div class="prompt-result"><strong>${answerText}</strong></div>`;
+        const ms = Date.now() - questionStartTime;
+        recordTime(q.rootPc, q.semi, ms);
+        renderHeatmap();
         play(q, 'harmonic');
         if (els.autoAdvance.checked) advanceTimer = setTimeout(startQuestion, 900);
       } else if (source === 'screen') {
