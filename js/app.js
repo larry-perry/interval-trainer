@@ -571,6 +571,9 @@
 
   /* ---------- boot ---------- */
   loadState();
+  // Sync the engine to the checkbox: a fresh visitor gets the default (on), while
+  // loadState has already restored an explicit choice from a prior session.
+  trainer.setWeakSpotWeighting(els.nudgeWeak.checked);
   syncActionEnabled();
   showIdlePrompt();
   renderStats();

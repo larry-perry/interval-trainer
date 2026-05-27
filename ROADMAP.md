@@ -39,7 +39,7 @@ The big one — turn the app from "drill" into "see yourself improve."
   correct** (★). Turns a miss into a guided correction instead of a dead end.
 - **★ Slight weak-spot weighting option.** When enabled, incorrectly answered
   or slow-to-answer `(note, interval)` combos appear *very slightly* more often
-  in the pool — not a hard focus mode, just a gentle nudge. Off by default.
+  in the pool — not a hard focus mode, just a gentle nudge. On by default.
 - **Adaptive practice.** Weight questions toward your weak `(note, interval)`
   combos using the tracked data; a "drill my weak spots" toggle.
 - **Quiz/session mode.** Fixed length (10/20/50), with a final score screen.
