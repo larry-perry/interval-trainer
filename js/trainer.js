@@ -26,6 +26,8 @@
     let weakSpotWeighting = false;
     let weakSpotStrength = 0.5; // how hard misses/slow combos are favored; higher = stronger
     let debug = false;
+    let circleRoots = false; // walk roots through the circle of fifths instead of random
+    let circleRootPc = null; // last root used while circling; null = restart at C
 
     const setMode = (m) => { mode = m; };
     const setSelected = (set) => { selected = new Set(set); };
@@ -34,6 +36,11 @@
     const setWeakSpotWeighting = (v) => { weakSpotWeighting = !!v; };
     const setWeakSpotStrength = (v) => { if (Number.isFinite(v)) weakSpotStrength = Math.max(0, v); };
     const setDebug = (v) => { debug = !!v; };
+    const setCircleRoots = (v) => {
+      v = !!v;
+      if (v !== circleRoots) circleRootPc = null; // restart the circle whenever it toggles
+      circleRoots = v;
+    };
 
     function resetStats() {
       stats.correct = stats.wrong = stats.streak = stats.best = stats.total = 0;
@@ -107,7 +114,21 @@
       const semis = [...selected];
 
       let rootPc, semi, attempts = 0;
-      if (weakSpotWeighting && Object.keys(combosData).length > 0) {
+      if (circleRoots) {
+        // Walk the circle of fifths (C → G → D → A → …), independent of the interval,
+        // so every key comes up evenly before any repeats. The interval is a uniform
+        // pick from the selection — weak-spot weighting can't steer the root here, so
+        // the UI greys it out while this is on (see app.js).
+        rootPc = circleRootPc === null ? 0 : pitchClass(circleRootPc + 7);
+        circleRootPc = rootPc;
+        semi = semis[Math.floor(Math.random() * semis.length)];
+        if (debug) {
+          console.log(
+            '%c[trainer]%c circle of fifths — root ' + pcName(rootPc) + ', random interval.',
+            'color:#0f7a6e;font-weight:700', 'color:inherit'
+          );
+        }
+      } else if (weakSpotWeighting && Object.keys(combosData).length > 0) {
         const pool = [];
         semis.forEach((s) => {
           for (let pc = 0; pc < 12; pc++) {
@@ -176,7 +197,8 @@
 
     return {
       setMode, setSelected, hasSelection, resetStats, setStats, setCombos,
-      setWeakSpotWeighting, setWeakSpotStrength, setDebug, next, answer, accuracy,
+      setWeakSpotWeighting, setWeakSpotStrength, setDebug, setCircleRoots,
+      next, answer, accuracy,
       get mode() { return mode; },
       get phase() { return phase; },
       get question() { return question; },
@@ -184,6 +206,7 @@
       get weakSpotWeighting() { return weakSpotWeighting; },
       get weakSpotStrength() { return weakSpotStrength; },
       get debug() { return debug; },
+      get circleRoots() { return circleRoots; },
     };
   }
 

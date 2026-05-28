@@ -31,8 +31,11 @@
     heatmapLabel: $('#heatmapLabel'),
     hmModeBtns: [...document.querySelectorAll('.hm-mode-btn')],
     nudgeWeak: $('#nudgeWeak'),
+    nudgeSetting: $('#nudgeSetting'),
     nudgeStrength: $('#nudgeStrength'),
     nudgeStrengthLabel: $('#nudgeStrengthLabel'),
+    strengthSetting: $('#strengthSetting'),
+    circleRoots: $('#circleRoots'),
     debugWeights: $('#debugWeights'),
     settingsBtn: $('#settingsBtn'),
     settingsModal: $('#settingsModal'),
@@ -119,7 +122,18 @@
     const level = Number(els.nudgeStrength.value);
     trainer.setWeakSpotStrength(STRENGTH_FACTORS[level] || STRENGTH_FACTORS[1]);
     els.nudgeStrengthLabel.textContent = STRENGTH_LABELS[level] || STRENGTH_LABELS[1];
-    els.nudgeStrength.disabled = !els.nudgeWeak.checked;
+    syncNudgeControls();
+  }
+
+  // Circle mode walks every key on its own, so weak-spot weighting can't steer the
+  // root while it's on — grey those controls out (the checkbox state is kept, just
+  // inactive, so turning circle back off resumes nudging as before).
+  function syncNudgeControls() {
+    const circling = els.circleRoots.checked;
+    els.nudgeWeak.disabled = circling;
+    els.nudgeStrength.disabled = circling || !els.nudgeWeak.checked;
+    els.nudgeSetting.classList.toggle('is-muted', circling);
+    els.strengthSetting.classList.toggle('is-muted', circling);
   }
 
   function setLive(midi) {
@@ -235,6 +249,7 @@
         autoAdvance: els.autoAdvance.checked,
         nudgeWeak: els.nudgeWeak.checked,
         nudgeStrength: Number(els.nudgeStrength.value),
+        circleRoots: els.circleRoots.checked,
         debug: els.debugWeights.checked,
         stats: { ...trainer.stats },
         combos,
@@ -265,6 +280,11 @@
 
       if (data.nudgeStrength >= 1 && data.nudgeStrength <= 3) {
         els.nudgeStrength.value = data.nudgeStrength;
+      }
+
+      if (typeof data.circleRoots === 'boolean') {
+        els.circleRoots.checked = data.circleRoots;
+        trainer.setCircleRoots(data.circleRoots);
       }
 
       if (typeof data.debug === 'boolean') {
@@ -588,6 +608,12 @@
 
   els.nudgeStrength.addEventListener('input', () => { applyStrength(); saveState(); });
 
+  els.circleRoots.addEventListener('change', () => {
+    trainer.setCircleRoots(els.circleRoots.checked);
+    syncNudgeControls();
+    saveState();
+  });
+
   els.debugWeights.addEventListener('change', () => {
     trainer.setDebug(els.debugWeights.checked);
     saveState();
@@ -611,6 +637,7 @@
   // loadState has already restored an explicit choice from a prior session.
   trainer.setWeakSpotWeighting(els.nudgeWeak.checked);
   trainer.setDebug(els.debugWeights.checked);
+  trainer.setCircleRoots(els.circleRoots.checked);
   applyStrength();
   syncActionEnabled();
   showIdlePrompt();

@@ -23,6 +23,8 @@ A good chunk of the original wishlist has landed:
 - **★ Weak-spot weighting.** Misses and slow `(note, interval)` combos come up more
   often, with a Gentle/Medium/Strong strength control. On by default.
 - **Microphone pitch detection** (autocorrelation) feeding the shared input layer.
+- **Circle-of-fifths root walk.** Optional: roots step C → G → D → A … through all
+  twelve keys instead of being picked at random. Off by default.
 - **Settings modal** consolidating auto-advance, the weak-spot nudge, and debug.
 
 ## Stats & progress
