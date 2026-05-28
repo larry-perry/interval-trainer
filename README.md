@@ -92,6 +92,7 @@ Done so far:
 - [x] Time-to-correct tracking
 - [x] Learn-from-the-miss loop (hunt for the right note, auto-advance unscored)
 - [x] Weak-spot weighting with a Gentle/Medium/Strong strength control
+- [x] Circle-of-fifths root walk (option, off by default) instead of random roots
 - [x] Settings modal
 
 Planned features and ideas live in **[ROADMAP.md](ROADMAP.md)** — including a

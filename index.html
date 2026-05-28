@@ -118,17 +118,18 @@
             <span class="switch-track"><span class="switch-thumb"></span></span>
           </span>
         </label>
-        <label class="setting">
+        <label class="setting" id="nudgeSetting">
           <span class="setting-info">
             <span class="setting-name">Nudge weak spots</span>
             <span class="setting-desc">Increase how often weak or slow note-and-interval combos come up.</span>
+            <span class="setting-hint">Not used while circling — the circle of fifths already covers every key.</span>
           </span>
           <span class="switch">
             <input type="checkbox" id="nudgeWeak" checked />
             <span class="switch-track"><span class="switch-thumb"></span></span>
           </span>
         </label>
-        <div class="setting setting-stack">
+        <div class="setting setting-stack" id="strengthSetting">
           <span class="setting-info">
             <span class="setting-name">Weighting strength</span>
             <span class="setting-desc">How hard misses are favored: <strong id="nudgeStrengthLabel">Gentle</strong>.</span>
@@ -140,6 +141,16 @@
             </div>
           </div>
         </div>
+        <label class="setting">
+          <span class="setting-info">
+            <span class="setting-name">Circle of fifths</span>
+            <span class="setting-desc">Walk the root through all 12 keys in fifths (C → G → D → A …) instead of picking it at random.</span>
+          </span>
+          <span class="switch">
+            <input type="checkbox" id="circleRoots" />
+            <span class="switch-track"><span class="switch-thumb"></span></span>
+          </span>
+        </label>
         <label class="setting">
           <span class="setting-info">
             <span class="setting-name">Debug</span>
