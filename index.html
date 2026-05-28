@@ -19,11 +19,19 @@
       <p class="tagline">Practice intervals on your real piano — by name or by ear. Played notes are read from USB&nbsp;MIDI, the&nbsp;mic, or the keys below.</p>
     </header>
 
+    <!-- ===== Setup zone: choose how and what to practice ===== -->
     <section class="controls" style="--d:1">
       <div class="mode-switch" role="tablist" aria-label="Practice mode">
         <button class="mode-btn active" data-mode="play" role="tab">Reading</button>
         <button class="mode-btn" data-mode="ear" role="tab">Ear</button>
       </div>
+      <button class="ghost-btn icon-text-btn" id="settingsBtn" type="button" aria-haspopup="dialog" aria-label="Settings">
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        <span>Settings</span>
+      </button>
       <div class="io">
         <div class="midi-status" title="USB MIDI input">
           <span class="dot" id="midiDot"></span>
@@ -31,51 +39,48 @@
           <select id="midiSelect" aria-label="MIDI input device" style="display:none"></select>
         </div>
         <button class="ghost-btn" id="micBtn" type="button">Use microphone</button>
-        <button class="ghost-btn icon-text-btn" id="settingsBtn" type="button" aria-haspopup="dialog" aria-label="Settings">
-          <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
-          <span>Settings</span>
-        </button>
       </div>
     </section>
 
-    <section class="stage" style="--d:2">
-      <div class="readout" aria-live="polite">
-        <div class="readout-note" id="liveNote">—</div>
-        <div class="readout-label" id="liveLabel">waiting for a note</div>
-      </div>
-      <div class="prompt" id="prompt"></div>
-    </section>
-
-    <section class="stats" style="--d:3">
-      <div class="stat"><span class="stat-num" id="statCorrect">0</span><span class="stat-key">correct</span></div>
-      <div class="stat"><span class="stat-num" id="statWrong">0</span><span class="stat-key">missed</span></div>
-      <div class="stat"><span class="stat-num" id="statStreak">0</span><span class="stat-key">streak</span></div>
-      <div class="stat"><span class="stat-num" id="statAccuracy">0%</span><span class="stat-key">accuracy</span></div>
-    </section>
-
-    <section class="actions" style="--d:4">
-      <button class="primary-btn" id="actionBtn" type="button">Start</button>
-      <button class="ghost-btn" id="replayBtn" type="button" disabled>Replay&nbsp;⟳</button>
-      <button class="ghost-btn" id="resetBtn" type="button">Reset score</button>
-    </section>
-
-    <section class="intervals" style="--d:5">
+    <section class="intervals" style="--d:2">
       <div class="section-label">Intervals to practice</div>
       <div class="interval-selector" id="intervalSelector"></div>
     </section>
 
-    <section class="keyboard" style="--d:6">
-      <div class="keyboard-bar">
-        <span class="section-label">Tap, or play on your piano</span>
-        <div class="size-switch" role="group" aria-label="Keyboard size">
-          <button class="size-btn active" data-size="octave" type="button">1 octave</button>
-          <button class="size-btn" data-size="full" type="button">Full</button>
+    <!-- ===== Play zone: the live loop, grouped right above the keyboard ===== -->
+    <div class="play-deck">
+      <section class="stage" style="--d:3">
+        <div class="readout" aria-live="polite">
+          <div class="readout-note" id="liveNote">—</div>
+          <div class="readout-label" id="liveLabel">waiting for a note</div>
         </div>
-      </div>
-      <div class="piano-wrapper" id="pianoWrapper"></div>
+        <div class="prompt" id="prompt"></div>
+      </section>
+
+      <section class="actions" style="--d:4">
+        <button class="primary-btn" id="actionBtn" type="button">Start</button>
+        <button class="ghost-btn" id="replayBtn" type="button" disabled>Replay&nbsp;⟳</button>
+        <button class="ghost-btn subtle-btn" id="resetBtn" type="button">Reset score</button>
+      </section>
+
+      <section class="keyboard" style="--d:5">
+        <div class="keyboard-bar">
+          <span class="section-label">Tap, or play on your piano</span>
+          <div class="size-switch" role="group" aria-label="Keyboard size">
+            <button class="size-btn active" data-size="octave" type="button">1 octave</button>
+            <button class="size-btn" data-size="full" type="button">Full</button>
+          </div>
+        </div>
+        <div class="piano-wrapper" id="pianoWrapper"></div>
+      </section>
+    </div>
+
+    <!-- ===== Results: running tally and the accuracy heatmap ===== -->
+    <section class="stats" style="--d:6">
+      <div class="stat"><span class="stat-num" id="statCorrect">0</span><span class="stat-key">correct</span></div>
+      <div class="stat"><span class="stat-num" id="statWrong">0</span><span class="stat-key">missed</span></div>
+      <div class="stat"><span class="stat-num" id="statStreak">0</span><span class="stat-key">streak</span></div>
+      <div class="stat"><span class="stat-num" id="statAccuracy">0%</span><span class="stat-key">accuracy</span></div>
     </section>
 
     <section class="stats-panel" style="--d:7">
