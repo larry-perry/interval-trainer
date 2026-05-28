@@ -95,10 +95,6 @@
     function highlightPc(pc, cls) {
       keyByMidi.forEach((el, m) => { if (App.theory.pitchClass(m) === pc) el.classList.add(cls); });
     }
-    function unhighlight(midi, cls) {
-      const el = keyByMidi.get(midi);
-      if (el) el.classList.remove(cls);
-    }
     function clear(cls) {
       const classes = cls ? [cls] : STATE_CLASSES;
       keyByMidi.forEach((el) => el.classList.remove(...classes));
@@ -122,7 +118,7 @@
       return keyByMidi.has(midi);
     }
 
-    return { element: piano, highlight, highlightPc, unhighlight, clear, flash, flashPc, fit, has, low, high, destroy };
+    return { element: piano, highlight, highlightPc, clear, flash, flashPc, has, low, high, destroy };
   }
 
   App.createPiano = createPiano;

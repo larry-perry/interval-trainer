@@ -4,7 +4,7 @@
 
 Practice musical intervals on your **real piano**. The app prompts an interval,
 you play it, and it tells you if you got it right — reading the note you played
-from **USB MIDI**, the **microphone** (coming next), or the **on-screen keyboard**.
+from **USB MIDI**, the **microphone**, or the **on-screen keyboard**.
 
 It builds on the interval-trainer idea from
 [TuTempo Academia Musical](https://tutempo.com.co/interval-trainer/): same
@@ -87,7 +87,13 @@ Done so far:
 - [x] Playing the root is free (orient without penalty)
 - [x] Pitch-class model (any octave counts) with randomized prompt octaves
 - [x] Single-octave / full keyboard toggle; reset-score button
+- [x] Persistence — intervals, mode, settings, stats, and history survive a reload
+- [x] Per-combo heatmap (note × interval) with an accuracy ↔ time toggle
+- [x] Time-to-correct tracking
+- [x] Learn-from-the-miss loop (hunt for the right note, auto-advance unscored)
+- [x] Weak-spot weighting with a Gentle/Medium/Strong strength control
+- [x] Settings modal
 
-Planned features and ideas live in **[ROADMAP.md](ROADMAP.md)** — including
-persistence, per-note/interval accuracy graphs, response-time tracking, a
-learn-from-the-miss loop, descending/harmonic intervals, and a PWA wrapper.
+Planned features and ideas live in **[ROADMAP.md](ROADMAP.md)** — including a
+quiz/session mode, descending/harmonic intervals, mic latency calibration, and a
+PWA wrapper.
