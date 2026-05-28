@@ -128,7 +128,12 @@
           rootPc = Math.floor(Math.random() * 12);
           attempts++;
         } while (question && rootPc === question.rootPc && attempts < 40);
-        if (debug) console.log('%c[trainer]%c weak-spot nudge off — uniform random pick.', 'color:#0f7a6e;font-weight:700', 'color:inherit');
+        if (debug) {
+          const reason = weakSpotWeighting
+            ? 'weak-spot nudge on, but no attempt history yet'
+            : 'weak-spot nudge off';
+          console.log('%c[trainer]%c ' + reason + ' — uniform random pick.', 'color:#0f7a6e;font-weight:700', 'color:inherit');
+        }
       }
 
       const octave = AUDIO_OCTAVES[Math.floor(Math.random() * AUDIO_OCTAVES.length)];
