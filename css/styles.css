@@ -60,6 +60,17 @@ body {
   gap: 1.4rem;
 }
 
+/* The live "play loop": prompt + readout, the Start/Replay controls, and the
+   keyboard, grouped tight and set apart from the setup zone above by a hairline. */
+.play-deck {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding-top: 1.3rem;
+  border-top: 1px solid var(--line-soft);
+}
+.play-deck .keyboard { margin-top: 0; }
+
 /* staggered entrance */
 .controls, .stage, .stats, .actions, .intervals, .keyboard, .stats-panel {
   animation: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
@@ -101,7 +112,7 @@ body {
   flex-wrap: wrap;
   gap: 0.9rem 1.2rem;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
 }
 .mode-switch {
   display: inline-flex;
@@ -129,7 +140,9 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
-.io { display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap; }
+/* margin-left:auto pushes the device/mic group to the far right, so the
+   settings button stays packed next to the mode switch as the row wraps. */
+.io { display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap; margin-left: auto; }
 .midi-status {
   display: inline-flex;
   align-items: center;
@@ -299,6 +312,20 @@ body {
 .ghost-btn:hover:not(:disabled) { border-color: var(--teal); color: var(--teal-deep); }
 .ghost-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .ghost-btn.pending { color: var(--teal-deep); border-color: var(--teal); background: var(--teal-tint); }
+
+/* Reset score is rare + destructive — demote it to a quiet text button so it
+   doesn't compete with Start/Replay. */
+.ghost-btn.subtle-btn {
+  border-color: transparent;
+  color: var(--ink-dim);
+  padding-left: 0.7rem;
+  padding-right: 0.7rem;
+}
+.ghost-btn.subtle-btn:hover:not(:disabled) {
+  border-color: transparent;
+  color: var(--red);
+  background: var(--red-tint);
+}
 
 /* ---------- interval selector ---------- */
 .section-label {
@@ -688,5 +715,6 @@ body {
   .readout-note { font-size: 2.1rem; }
   .readout-label { margin-top: 0; }
   .controls { justify-content: center; }
+  .io { margin-left: 0; }
   .stats { grid-template-columns: repeat(2, 1fr); }
 }

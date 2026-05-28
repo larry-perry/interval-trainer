@@ -252,7 +252,6 @@
       if (Array.isArray(data.selectedSemis)) {
         data.selectedSemis.forEach((s) => selected.add(s));
         trainer.setSelected(selected);
-        trainer.setCombos(combos);
         els.intervalSelector.querySelectorAll('.interval-btn').forEach((btn) => {
           btn.classList.toggle('active', selected.has(Number(btn.dataset.semi)));
         });
@@ -541,7 +540,7 @@
     els.micBtn.disabled = false;
   });
 
-  els.resetBtn.addEventListener('click', () => { trainer.resetStats(); renderStats(); combos = {}; renderHeatmap(); saveState(); });
+  els.resetBtn.addEventListener('click', () => { trainer.resetStats(); renderStats(); combos = {}; trainer.setCombos(combos); renderHeatmap(); saveState(); });
 
   els.statsToggle.addEventListener('click', () => {
     const hidden = els.heatmap.style.display === 'none';
@@ -604,6 +603,10 @@
 
   /* ---------- boot ---------- */
   loadState();
+  // loadState may replace the `combos` object wholesale (combos = data.combos),
+  // so point the engine at the live reference here — after the load — or weak-spot
+  // weighting silently reads a stale, empty map and falls back to uniform picks.
+  trainer.setCombos(combos);
   // Sync the engine to the checkbox: a fresh visitor gets the default (on), while
   // loadState has already restored an explicit choice from a prior session.
   trainer.setWeakSpotWeighting(els.nudgeWeak.checked);
