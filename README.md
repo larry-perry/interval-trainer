@@ -2,6 +2,8 @@
 
 > **Entirely vibe coded.** This project was built through conversations with an AI coding agent (Claude), not by sitting down and typing out every line by hand. The ideas, design direction, and musical scope are human; the commits are a collaboration.
 
+**▶ Try it live: [larry-perry.github.io/interval-trainer](https://larry-perry.github.io/interval-trainer/)**
+
 Practice musical intervals on your **real piano**. The app prompts an interval,
 you play it, and it tells you if you got it right — reading the note you played
 from **USB MIDI**, the **microphone**, or the **on-screen keyboard**.
