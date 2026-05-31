@@ -52,6 +52,7 @@ path.
 | **USB MIDI** | Chrome, Edge, Firefox, Chrome on Android. **Not Safari** (no Web MIDI). |
 | **Microphone** | All modern browsers incl. iOS Safari. Autocorrelation pitch detection; works over a secure context (`localhost`/HTTPS). |
 | **On-screen keyboard** | Everywhere. Always available as a fallback. |
+| **Computer keyboard** | Everywhere. Optional (toggle in Settings). Two-row "tracker" layout: the `Z` row is one octave (Z = C), the `Q` row the octave above, black keys on the staggered keys between. |
 
 The mic detector is monophonic (one note at a time) and gates itself while the
 app plays a prompt so the speakers aren't heard as you. Detection thresholds are
