@@ -1,0 +1,37 @@
+name: githack preview link
+
+# Posts a raw.githack.com preview link for the PR's branch so reviewers can
+# open the live page without checking out the code. Same-repo PRs only —
+# pull_request from a fork gets a read-only token and can't comment.
+on:
+  pull_request:
+    types: [opened, reopened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  comment-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const ref = pr.head.ref;
+            const { owner, repo } = context.repo;
+            const base = `https://raw.githack.com/${owner}/${repo}/${ref}`;
+            const body = [
+              '🔗 **githack preview**',
+              '',
+              `Open the live page for this branch: ${base}/index.html`,
+              '',
+              '_Tracks the branch, so it updates as you push. Swap `raw.githack.com`'
+              + ' for `rawcdn.githack.com` for the CDN-cached (faster, but stale up to a day) variant._',
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: pr.number,
+              body,
+            });
