@@ -245,6 +245,7 @@ body {
   line-height: 1;
   color: var(--teal-deep);
 }
+.prompt-query { font-size: 0.95rem; color: var(--ink-soft); }
 .prompt-task { font-size: 1rem; color: var(--ink-soft); }
 .prompt-result { font-family: var(--display); font-size: 1.5rem; color: var(--ink); }
 .prompt-idle { color: var(--ink-soft); font-size: 1rem; }
