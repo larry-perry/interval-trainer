@@ -345,6 +345,13 @@
     }
   }
 
+  // A short reminder of what was asked, so the query stays visible after a miss.
+  function queryReminder(q) {
+    return trainer.mode === 'ear'
+      ? `Root <strong>${q.rootDisplay}</strong> — play the note you heard above it.`
+      : `<strong>${q.interval.label}</strong> above <strong>${q.rootDisplay}</strong>.`;
+  }
+
   /* ---------- question flow ---------- */
   function startQuestion() {
     clearAdvance();
@@ -403,6 +410,7 @@
       if (piano.has(playedMidi)) piano.highlight(playedMidi, 'is-wrong');
       els.prompt.innerHTML = `
         <div class="prompt-kicker">Not quite</div>
+        <div class="prompt-query muted">${queryReminder(q)}</div>
         <div class="prompt-result">The answer was <strong>${answerText}</strong>${nameReveal}.</div>
         <div class="prompt-task muted">You played ${theory.midiName(playedMidi)}.</div>
         <div class="prompt-task muted">Find it on your piano.</div>`;
