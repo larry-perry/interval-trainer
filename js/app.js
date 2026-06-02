@@ -63,6 +63,20 @@
     input.suppressMic(SUPPRESS[style] || 1000);
   }
 
+  // The note name shown/revealed for a question (octave-free spelling from theory).
+  const noteLabel = (q) => q.answer.display;
+
+  // Confirm a correct answer by sounding it: a single note in Note mode (no root
+  // context), the root+target chord in the interval modes.
+  function confirmSound(q) {
+    if (trainer.mode === 'note') {
+      audio.playMidi(q.audioTargetMidi, 0, 0.9);
+      input.suppressMic(SUPPRESS.harmonic);
+    } else {
+      play(q, 'harmonic');
+    }
+  }
+
   const trainer = createTrainer();
   const input = createInputManager();
   const selected = new Set(); // nothing selected by default — the player chooses
@@ -292,7 +306,7 @@
         trainer.setDebug(data.debug);
       }
 
-      if (data.mode === 'play' || data.mode === 'ear') {
+      if (data.mode === 'play' || data.mode === 'ear' || data.mode === 'note') {
         trainer.setMode(data.mode);
         els.modeBtns.forEach((b) => b.classList.toggle('active', b.dataset.mode === data.mode));
       }
@@ -323,12 +337,18 @@
     } catch (e) { /* fall back to defaults */ }
   }
 
+  const INTRO = {
+    ear:  { kicker: 'Ear training',     verb: 'Listen, then play what you hear' },
+    note: { kicker: 'Note finding',     verb: 'Play the named note' },
+    play: { kicker: 'Interval reading', verb: 'Play the named interval' },
+  };
+
   function showIdlePrompt() {
     els.prompt.className = 'prompt';
-    const verb = trainer.mode === 'ear' ? 'Listen, then play what you hear' : 'Play the named interval';
+    const intro = INTRO[trainer.mode] || INTRO.play;
     els.prompt.innerHTML = `
-      <div class="prompt-kicker">${trainer.mode === 'ear' ? 'Ear training' : 'Interval reading'}</div>
-      <div class="prompt-idle">${verb}.<br>Pick intervals below and press <strong>Start</strong>.</div>`;
+      <div class="prompt-kicker">${intro.kicker}</div>
+      <div class="prompt-idle">${intro.verb}.<br>Pick intervals below and press <strong>Start</strong>.</div>`;
   }
 
   // Repaint key highlights for the current question/phase (used after a rebuild too).
@@ -336,7 +356,8 @@
     piano.clear();
     const q = trainer.question;
     if (!q) return;
-    piano.highlightPc(q.rootPc, 'is-root');
+    // Note mode hides the root entirely — you're given the target note, not an interval.
+    if (trainer.mode !== 'note') piano.highlightPc(q.rootPc, 'is-root');
     if (trainer.phase === 'answered') {
       piano.highlightPc(q.targetPc, 'is-target');
       if (lastJudged && piano.has(lastJudged.playedMidi)) {
@@ -355,25 +376,33 @@
     questionStartTime = Date.now();
     audio.ensure();
     piano.clear();
-    piano.highlightPc(q.rootPc, 'is-root');
+    els.prompt.className = 'prompt';
 
-    if (trainer.mode === 'ear') {
-      els.prompt.className = 'prompt';
+    if (trainer.mode === 'note') {
+      // Note finding: name the target note directly, no root or audio — go straight to it.
       els.prompt.innerHTML = `
-        <div class="prompt-kicker">Ear training</div>
-        <div class="prompt-root">root <strong>${q.rootDisplay}</strong></div>
-        <div class="prompt-task">Play the note you hear above it.</div>`;
-      play(q, 'melodic');
+        <div class="prompt-kicker">Play this note</div>
+        <div class="prompt-root">${noteLabel(q)}</div>
+        <div class="prompt-task muted">Find it anywhere on the keyboard.</div>`;
+      els.replayBtn.disabled = true; // nothing to replay — there's no sounded prompt
     } else {
-      els.prompt.className = 'prompt';
-      els.prompt.innerHTML = `
-        <div class="prompt-kicker">Play this interval</div>
-        <div class="prompt-root">${q.rootDisplay}</div>
-        <div class="prompt-task"><strong>${q.interval.label}</strong> above <span class="muted">(${q.interval.name})</span></div>`;
-      play(q, 'root');
+      piano.highlightPc(q.rootPc, 'is-root');
+      if (trainer.mode === 'ear') {
+        els.prompt.innerHTML = `
+          <div class="prompt-kicker">Ear training</div>
+          <div class="prompt-root">root <strong>${q.rootDisplay}</strong></div>
+          <div class="prompt-task">Play the note you hear above it.</div>`;
+        play(q, 'melodic');
+      } else {
+        els.prompt.innerHTML = `
+          <div class="prompt-kicker">Play this interval</div>
+          <div class="prompt-root">${q.rootDisplay}</div>
+          <div class="prompt-task"><strong>${q.interval.label}</strong> above <span class="muted">(${q.interval.name})</span></div>`;
+        play(q, 'root');
+      }
+      els.replayBtn.disabled = false;
     }
 
-    els.replayBtn.disabled = false;
     els.actionBtn.textContent = 'Next';
     renderStats();
   }
@@ -396,6 +425,10 @@
     const nameReveal = trainer.mode === 'ear'
       ? ` — that was a <strong>${q.interval.label}</strong>`
       : '';
+    // Note mode never hid the note, so "the answer was…" would be redundant — point at it instead.
+    const wrongLine = trainer.mode === 'note'
+      ? `You need <strong>${answerText}</strong>.`
+      : `The answer was <strong>${answerText}</strong>${nameReveal}.`;
 
     if (res.result === 'wrong') {
       retrying = true;
@@ -403,7 +436,7 @@
       if (piano.has(playedMidi)) piano.highlight(playedMidi, 'is-wrong');
       els.prompt.innerHTML = `
         <div class="prompt-kicker">Not quite</div>
-        <div class="prompt-result">The answer was <strong>${answerText}</strong>${nameReveal}.</div>
+        <div class="prompt-result">${wrongLine}</div>
         <div class="prompt-task muted">You played ${theory.midiName(playedMidi)}.</div>
         <div class="prompt-task muted">Find it on your piano.</div>`;
     } else {
@@ -413,7 +446,7 @@
       els.prompt.innerHTML = `
         <div class="prompt-kicker">Correct</div>
         <div class="prompt-result"><strong>${answerText}</strong>${nameReveal}</div>`;
-      play(q, 'harmonic');
+      confirmSound(q);
       if (els.autoAdvance.checked) advanceTimer = setTimeout(startQuestion, AUTO_ADVANCE_MS);
     }
     renderStats();
@@ -445,7 +478,7 @@
         const ms = Date.now() - questionStartTime;
         recordTime(q.rootPc, q.semi, ms);
         renderHeatmap();
-        play(q, 'harmonic');
+        confirmSound(q);
         if (els.autoAdvance.checked) advanceTimer = setTimeout(startQuestion, 900);
       } else if (source === 'screen') {
         // sound the player's hunting taps (MIDI/mic already make real sound)
@@ -458,8 +491,9 @@
 
     // Playing the root is "free" — any octave of it lets you orient without being
     // judged. (No interval here lands on the root's own pitch class, so this is safe.)
+    // Note mode shows no root, so there's nothing to orient against — every note is judged.
     const q = trainer.question;
-    if (theory.pitchClass(midi) === q.rootPc) {
+    if (trainer.mode !== 'note' && theory.pitchClass(midi) === q.rootPc) {
       if (source === 'screen') { audio.playMidi(midi, 0, 0.5); input.suppressMic(700); }
       return;
     }

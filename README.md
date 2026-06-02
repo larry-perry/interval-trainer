@@ -12,12 +12,19 @@ It builds on the interval-trainer idea from
 [TuTempo Academia Musical](https://tutempo.com.co/interval-trainer/): same
 concept, but instead of clicking the answer you play it on your instrument.
 
-## Two modes
+## Three modes
 
 - **Reading** — the interval is named (e.g. "G — Major 3rd above"). Play the
   correct note from theory.
+- **Note** — the target note is named directly (e.g. "Play E♭") with no root or
+  interval shown. Just find it on the keyboard — a drill for going *straight* to
+  the note instead of counting semitones up from a root.
 - **Ear** — the interval is *played*, not named. Reproduce the note you hear;
   the name is revealed after you answer.
+
+All three share the interval selection, heatmap, and weak-spot weighting — Note
+mode still draws from your chosen intervals, so it reinforces the same
+note-and-interval combos by their result.
 
 Judging is by **pitch class** — the right note in *any* octave is correct ("which
 note," not "which octave"). The prompt sounds the interval in a random octave for
@@ -27,7 +34,8 @@ defaults to a single, phone-friendly octave, with a **1 octave / Full** toggle.
 **Playing the root is free** — it never counts as a mistake, so you can sound
 the root to orient yourself (handy in Ear mode). On-screen clicks of the root
 play it back. (For the octave interval, only the exact root note is free, since
-the answer shares the root's pitch class.)
+the answer shares the root's pitch class.) Note mode is the exception: it shows
+no root, so every note you play is judged.
 
 **Auto-advance** (toggle, on by default): about a second after a correct answer
 it moves on to the next note automatically. Turn it off to advance manually.
@@ -96,6 +104,7 @@ Done so far:
 - [x] Weak-spot weighting with a Gentle/Medium/Strong strength control
 - [x] Circle-of-fifths root walk (option, off by default) instead of random roots
 - [x] Settings modal
+- [x] Note mode — name the target note directly and just find it on the keyboard
 
 Planned features and ideas live in **[ROADMAP.md](ROADMAP.md)** — including a
 quiz/session mode, descending/harmonic intervals, mic latency calibration, and a
