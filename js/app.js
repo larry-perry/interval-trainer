@@ -17,6 +17,10 @@
     statStreak: $('#statStreak'),
     statAccuracy: $('#statAccuracy'),
     pianoWrapper: $('#pianoWrapper'),
+    flashcards: $('#flashcards'),
+    inputLabel: $('#inputLabel'),
+    sizeSwitch: $('#sizeSwitch'),
+    answerBtns: [...document.querySelectorAll('#answerSwitch [data-answer]')],
     actionBtn: $('#actionBtn'),
     replayBtn: $('#replayBtn'),
     midiSelect: $('#midiSelect'),
@@ -53,6 +57,7 @@
   let combos = {};
   let questionStartTime = 0;
   let heatmapMode = 'accuracy';
+  let answerMode = 'keys'; // 'keys' = play it; 'cards' = pick from multiple choice
   const clearAdvance = () => { if (advanceTimer) { clearTimeout(advanceTimer); advanceTimer = null; } };
 
   // Play a prompt and deafen the mic for the playback window so the speakers
@@ -246,6 +251,7 @@
         selectedSemis: [...selected],
         mode: trainer.mode,
         keyboardSize,
+        answerMode,
         autoAdvance: els.autoAdvance.checked,
         nudgeWeak: els.nudgeWeak.checked,
         nudgeStrength: Number(els.nudgeStrength.value),
@@ -303,6 +309,10 @@
         els.sizeBtns.forEach((b) => b.classList.toggle('active', b.dataset.size === keyboardSize));
       }
 
+      if (data.answerMode === 'keys' || data.answerMode === 'cards') {
+        answerMode = data.answerMode;
+      }
+
       if (typeof data.autoAdvance === 'boolean') {
         els.autoAdvance.checked = data.autoAdvance;
       }
@@ -324,6 +334,7 @@
   }
 
   function showIdlePrompt() {
+    if (els.flashcards) els.flashcards.innerHTML = '';
     els.prompt.className = 'prompt';
     const verb = trainer.mode === 'ear' ? 'Listen, then play what you hear' : 'Play the named interval';
     els.prompt.innerHTML = `
@@ -350,6 +361,123 @@
     return trainer.mode === 'ear'
       ? `Root <strong>${q.rootDisplay}</strong> — play the note you heard above it.`
       : `<strong>${q.interval.label}</strong> above <strong>${q.rootDisplay}</strong>.`;
+  }
+
+  // The answer note name, offering the precise double-accidental spelling when the
+  // displayed one is a simplified enharmonic. Shared by every reveal.
+  function answerHtml(q) {
+    return q.answer.accurate
+      ? `${q.answer.display} <span class="muted">(more precisely ${q.answer.accurate})</span>`
+      : q.answer.display;
+  }
+
+  /* ---------- flashcards (multiple choice) ---------- */
+  const CHOICE_COUNT = 4;
+
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // Options for a question: the correctly-spelled answer plus distractors drawn from
+  // where OTHER intervals above the same root would land, so every choice reads like
+  // a plausible note (and, being different intervals, never collides with the answer).
+  function buildChoices(q) {
+    const opts = [{ pc: q.targetPc, label: q.answer.display }];
+    const used = new Set([q.targetPc]);
+    shuffle(theory.INTERVALS.filter((iv) => iv.semi !== q.semi)).forEach((iv) => {
+      if (opts.length >= CHOICE_COUNT) return;
+      const pc = theory.pitchClass(q.rootPc + iv.semi);
+      if (used.has(pc)) return;
+      used.add(pc);
+      opts.push({ pc, label: theory.spellName(q.rootDisplay, q.rootPc, iv.semi).display });
+    });
+    // Pad with random pitch classes if a tiny interval selection didn't yield enough.
+    while (opts.length < CHOICE_COUNT) {
+      const pc = Math.floor(Math.random() * 12);
+      if (used.has(pc)) continue;
+      used.add(pc);
+      opts.push({ pc, label: theory.pcName(pc) });
+    }
+    return shuffle(opts);
+  }
+
+  function renderFlashcards(q) {
+    els.flashcards.innerHTML = '';
+    if (!q) return;
+    buildChoices(q).forEach((opt) => {
+      const btn = document.createElement('button');
+      btn.className = 'flashcard';
+      btn.type = 'button';
+      btn.textContent = opt.label;
+      btn.dataset.pc = opt.pc;
+      btn.addEventListener('click', () => judgeCard(opt, btn));
+      els.flashcards.appendChild(btn);
+    });
+  }
+
+  // Judge a multiple-choice pick. Mirrors judge() but the feedback lands on the cards
+  // (and the hidden keyboard) rather than waiting for a played note.
+  function judgeCard(opt, btn) {
+    if (trainer.phase !== 'awaiting') return;
+    clearAdvance();
+    const res = trainer.answer(60 + opt.pc); // pitch-class carrier; judging ignores octave
+    if (!res) return;
+    const q = res.question;
+    lastJudged = null;
+    const ms = res.result === 'correct' ? Date.now() - questionStartTime : undefined;
+    recordCombo(q.rootPc, q.semi, res.result === 'correct', ms);
+    renderHeatmap();
+
+    // Lock the choices, green the right one, red the wrong pick.
+    els.flashcards.querySelectorAll('.flashcard').forEach((c) => {
+      c.disabled = true;
+      if (Number(c.dataset.pc) === q.targetPc) c.classList.add('is-correct');
+    });
+    if (res.result === 'wrong') btn.classList.add('is-wrong');
+    // Reflect the answer on the (hidden) keyboard too, so a mid-question switch to Keys reads right.
+    piano.clear('is-active');
+    piano.highlightPc(q.targetPc, 'is-target');
+
+    const reveal = trainer.mode === 'ear' ? ` — that was a <strong>${q.interval.label}</strong>` : '';
+    if (res.result === 'wrong') {
+      els.prompt.className = 'prompt wrong';
+      els.prompt.innerHTML = `
+        <div class="prompt-kicker">Not quite</div>
+        <div class="prompt-query muted">${queryReminder(q)}</div>
+        <div class="prompt-result">The answer was <strong>${answerHtml(q)}</strong>${reveal}.</div>
+        <div class="prompt-task muted">You chose ${opt.label}.</div>`;
+    } else {
+      els.prompt.className = 'prompt correct';
+      els.prompt.innerHTML = `
+        <div class="prompt-kicker">Correct</div>
+        <div class="prompt-result"><strong>${answerHtml(q)}</strong>${reveal}</div>`;
+    }
+    play(q, 'harmonic'); // sound the interval either way, so the right answer is heard
+    if (els.autoAdvance.checked) {
+      advanceTimer = setTimeout(startQuestion, res.result === 'correct' ? AUTO_ADVANCE_MS : 1900);
+    }
+    renderStats();
+    saveState();
+  }
+
+  // Swap the answer surface between the keyboard and the flashcards.
+  function applyAnswerMode() {
+    const cards = answerMode === 'cards';
+    els.flashcards.hidden = !cards;
+    els.pianoWrapper.style.display = cards ? 'none' : '';
+    els.sizeSwitch.style.display = cards ? 'none' : '';
+    els.inputLabel.textContent = cards ? 'Pick the note' : 'Tap, or play on your piano';
+    els.answerBtns.forEach((b) => b.classList.toggle('active', (b.dataset.answer === 'cards') === cards));
+    if (cards && trainer.phase === 'awaiting') {
+      renderFlashcards(trainer.question);
+    } else {
+      els.flashcards.innerHTML = '';
+      if (!cards) refreshHighlights();
+    }
   }
 
   /* ---------- question flow ---------- */
@@ -380,6 +508,9 @@
       play(q, 'root');
     }
 
+    if (answerMode === 'cards') renderFlashcards(q);
+    else els.flashcards.innerHTML = '';
+
     els.replayBtn.disabled = false;
     els.actionBtn.textContent = 'Next';
     renderStats();
@@ -397,9 +528,7 @@
     piano.clear('is-active');
     piano.highlightPc(q.targetPc, 'is-target'); // the answer note, in every octave shown
 
-    const answerText = q.answer.accurate
-      ? `${q.answer.display} <span class="muted">(more precisely ${q.answer.accurate})</span>`
-      : q.answer.display;
+    const answerText = answerHtml(q);
     const nameReveal = trainer.mode === 'ear'
       ? ` — that was a <strong>${q.interval.label}</strong>`
       : '';
@@ -434,6 +563,9 @@
     setLive(midi);
     if (piano.has(midi)) piano.flash(midi, 'is-active');
     else piano.flashPc(theory.pitchClass(midi), 'is-active');
+    // In flashcard mode the cards judge the answer; played notes only echo on the
+    // readout/keyboard, never score.
+    if (answerMode === 'cards') return;
     // After a miss: hunt for the right note. Found note confirms + advances (not scored).
     if (trainer.phase === 'answered' && retrying) {
       const q = trainer.question;
@@ -443,9 +575,7 @@
         piano.clear('is-active');
         piano.highlightPc(q.targetPc, 'is-target');
         if (piano.has(midi)) piano.highlight(midi, 'is-correct');
-        const answerText = q.answer.accurate
-          ? `${q.answer.display} <span class="muted">(more precisely ${q.answer.accurate})</span>`
-          : q.answer.display;
+        const answerText = answerHtml(q);
         els.prompt.className = 'prompt correct';
         els.prompt.innerHTML = `
           <div class="prompt-kicker">There it is</div>
@@ -586,6 +716,16 @@
     });
   });
 
+  // Answer method: play it on the keyboard vs pick from multiple-choice cards.
+  els.answerBtns.forEach((b) => {
+    b.addEventListener('click', () => {
+      if (b.dataset.answer === answerMode) return;
+      answerMode = b.dataset.answer;
+      applyAnswerMode();
+      saveState();
+    });
+  });
+
   // Keyboard size: one octave (phone-friendly) vs the full range.
   els.sizeBtns.forEach((b) => {
     b.addEventListener('click', () => {
@@ -647,6 +787,7 @@
   trainer.setDebug(els.debugWeights.checked);
   trainer.setCircleRoots(els.circleRoots.checked);
   applyStrength();
+  applyAnswerMode();
   syncActionEnabled();
   showIdlePrompt();
   renderStats();

@@ -65,13 +65,20 @@
 
       <section class="keyboard" style="--d:5">
         <div class="keyboard-bar">
-          <span class="section-label">Tap, or play on your piano</span>
-          <div class="size-switch" role="group" aria-label="Keyboard size">
-            <button class="size-btn active" data-size="octave" type="button">1 octave</button>
-            <button class="size-btn" data-size="full" type="button">Full</button>
+          <span class="section-label" id="inputLabel">Tap, or play on your piano</span>
+          <div class="bar-switches">
+            <div class="size-switch" role="group" aria-label="Answer method" id="answerSwitch">
+              <button class="size-btn active" data-answer="keys" type="button">Keys</button>
+              <button class="size-btn" data-answer="cards" type="button">Cards</button>
+            </div>
+            <div class="size-switch" role="group" aria-label="Keyboard size" id="sizeSwitch">
+              <button class="size-btn active" data-size="octave" type="button">1 octave</button>
+              <button class="size-btn" data-size="full" type="button">Full</button>
+            </div>
           </div>
         </div>
         <div class="piano-wrapper" id="pianoWrapper"></div>
+        <div class="flashcards" id="flashcards" hidden></div>
       </section>
     </div>
 

@@ -26,6 +26,10 @@ A good chunk of the original wishlist has landed:
 - **Circle-of-fifths root walk.** Optional: roots step C → G → D → A … through all
   twelve keys instead of being picked at random. Off by default.
 - **Settings modal** consolidating auto-advance, the weak-spot nudge, and debug.
+- **★ Flashcard / multiple-choice answers.** A *Keys / Cards* toggle: instead of
+  playing the note, pick from four note-name cards (distractors are the notes other
+  intervals above the same root would produce). Works in both Reading and Ear mode.
+  *Next step here: prompt/answer as notes on a staff (see below).*
 
 ## Stats & progress
 - **Session summary.** After a run: accuracy, weakest intervals, fastest/slowest,
@@ -48,7 +52,9 @@ A good chunk of the original wishlist has landed:
   **play both notes** (root + target), not just the target.
 - **Key-constrained practice.** Restrict to a chosen key so spellings follow its
   signature and you drill diatonic intervals.
-- **Staff notation.** Show the prompt/answer on a staff to tie ear ↔ reading.
+- **Staff notation.** Show the prompt/answer on a staff to tie ear ↔ reading. *Now
+  the natural follow-on to the flashcard mode: render the root (and answer) on a
+  staff, and offer staff-image cards as a third answer surface.*
 - **Register selection.** Let prompts target a chosen octave range (e.g. match
   your piano).
 - **Compound intervals** (9ths+) and the octave, for an "advanced" mode.
