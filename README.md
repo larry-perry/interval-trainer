@@ -29,6 +29,15 @@ the root to orient yourself (handy in Ear mode). On-screen clicks of the root
 play it back. (For the octave interval, only the exact root note is free, since
 the answer shares the root's pitch class.)
 
+**Answer method** (toggle above the keyboard): **Keys** or **Cards**. *Keys* is the
+default — play the note on USB MIDI, the mic, or the on-screen piano. *Cards* turns
+the question into multiple choice: four note-name flashcards, one correct, with
+distractors drawn from where other intervals above the same root would land —
+handy on a phone, or away from an instrument. A correct tap greens and moves on;
+a wrong tap reds, reveals the right card, and waits — pick the highlighted note
+(it stays live, like hunting for it on the keyboard) or press Next to continue.
+Works in both Reading and Ear mode. (Notes-on-a-staff prompts are the next step here.)
+
 **Auto-advance** (toggle, on by default): about a second after a correct answer
 it moves on to the next note automatically. Turn it off to advance manually.
 
@@ -89,6 +98,7 @@ Done so far:
 - [x] Playing the root is free (orient without penalty)
 - [x] Pitch-class model (any octave counts) with randomized prompt octaves
 - [x] Single-octave / full keyboard toggle; reset-score button
+- [x] Flashcard (multiple-choice) answer method as an alternative to playing it
 - [x] Persistence — intervals, mode, settings, stats, and history survive a reload
 - [x] Per-combo heatmap (note × interval) with an accuracy ↔ time toggle
 - [x] Time-to-correct tracking
