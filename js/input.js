@@ -149,7 +149,7 @@
           audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
         });
         const ctx = App.audio.getContext();
-        if (ctx.state === 'suspended') await ctx.resume();
+        await App.audio.resumeIfNeeded();
         const src = ctx.createMediaStreamSource(micStream);
         analyser = ctx.createAnalyser();
         analyser.fftSize = 2048;
