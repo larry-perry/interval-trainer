@@ -510,7 +510,12 @@ body {
   box-shadow: var(--shadow-sm);
   transition: transform 0.12s ease, border-color 0.18s ease, color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
 }
-.flashcard:hover:not(:disabled) { border-color: var(--teal); color: var(--teal-deep); transform: translateY(-2px); }
+/* Gate hover behind a real pointer: on touch (iOS especially) :hover sticks after a
+   tap and would re-apply to whichever card lands at the tap point on the next
+   question, making it look pre-selected. */
+@media (hover: hover) {
+  .flashcard:hover:not(:disabled) { border-color: var(--teal); color: var(--teal-deep); transform: translateY(-2px); }
+}
 .flashcard:active:not(:disabled) { transform: translateY(0); }
 .flashcard:disabled { cursor: default; }
 /* Reveal after a pick: the right note greens, the chosen wrong one reds. */
