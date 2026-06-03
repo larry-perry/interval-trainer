@@ -256,6 +256,9 @@ body {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 0.6rem;
+  /* Same as the flashcards: keep the staff ruling out of the grid gaps so it
+     doesn't draw a line through the tiles (notably when they wrap to 2×2). */
+  background: var(--paper);
 }
 .stat {
   background: var(--surface);
@@ -495,6 +498,9 @@ body {
   width: 100%;
   max-width: 520px;
   margin: 0.2rem auto 0;
+  /* Cover the page's staff ruling so it can't peek through the grid's gaps and
+     read as a line slicing across the cards (most visible on mobile). */
+  background: var(--paper);
 }
 .flashcard {
   font-family: var(--display);
