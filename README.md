@@ -32,10 +32,11 @@ the answer shares the root's pitch class.)
 **Answer method** (toggle above the keyboard): **Keys** or **Cards**. *Keys* is the
 default — play the note on USB MIDI, the mic, or the on-screen piano. *Cards* turns
 the question into multiple choice: four note-name flashcards, one correct, with
-distractors drawn from where other intervals above the same root would land. Tap
-one and the right card greens while a wrong pick reds — handy on a phone, or away
-from an instrument. Works in both Reading and Ear mode. (Notes-on-a-staff prompts
-are the next step here.)
+distractors drawn from where other intervals above the same root would land —
+handy on a phone, or away from an instrument. A correct tap greens and moves on;
+a wrong tap reds, reveals the right card, and waits — pick the highlighted note
+(it stays live, like hunting for it on the keyboard) or press Next to continue.
+Works in both Reading and Ear mode. (Notes-on-a-staff prompts are the next step here.)
 
 **Auto-advance** (toggle, on by default): about a second after a correct answer
 it moves on to the next note automatically. Turn it off to advance manually.

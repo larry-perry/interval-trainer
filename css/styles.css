@@ -515,6 +515,8 @@ body {
    question, making it look pre-selected. */
 @media (hover: hover) {
   .flashcard:hover:not(:disabled) { border-color: var(--teal); color: var(--teal-deep); transform: translateY(-2px); }
+  /* The revealed answer stays pickable after a miss — keep it green on hover, not teal. */
+  .flashcard.is-correct:hover:not(:disabled) { border-color: var(--green); color: var(--green); }
 }
 .flashcard:active:not(:disabled) { transform: translateY(0); }
 .flashcard:disabled { cursor: default; }

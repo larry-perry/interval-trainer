@@ -414,15 +414,21 @@
       btn.type = 'button';
       btn.textContent = opt.label;
       btn.dataset.pc = opt.pc;
-      btn.addEventListener('click', () => judgeCard(opt, btn));
+      btn.addEventListener('click', () => onCardClick(opt, btn));
       els.flashcards.appendChild(btn);
     });
+  }
+
+  function onCardClick(opt, btn) {
+    if (trainer.phase === 'awaiting') { judgeCard(opt, btn); return; }
+    // After a miss the right card stays live: clicking it confirms the answer (unscored)
+    // and advances, mirroring the keyboard's "hunt for the note" loop.
+    if (retrying && trainer.question && opt.pc === trainer.question.targetPc) confirmCardFound();
   }
 
   // Judge a multiple-choice pick. Mirrors judge() but the feedback lands on the cards
   // (and the hidden keyboard) rather than waiting for a played note.
   function judgeCard(opt, btn) {
-    if (trainer.phase !== 'awaiting') return;
     clearAdvance();
     const res = trainer.answer(60 + opt.pc); // pitch-class carrier; judging ignores octave
     if (!res) return;
@@ -432,35 +438,56 @@
     recordCombo(q.rootPc, q.semi, res.result === 'correct', ms);
     renderHeatmap();
 
-    // Lock the choices, green the right one, red the wrong pick.
+    // Green the right card. On a miss it stays enabled so it can be picked; the rest lock.
+    const wrong = res.result === 'wrong';
     els.flashcards.querySelectorAll('.flashcard').forEach((c) => {
-      c.disabled = true;
-      if (Number(c.dataset.pc) === q.targetPc) c.classList.add('is-correct');
+      const isTarget = Number(c.dataset.pc) === q.targetPc;
+      if (isTarget) c.classList.add('is-correct');
+      c.disabled = wrong ? !isTarget : true;
     });
-    if (res.result === 'wrong') btn.classList.add('is-wrong');
+    if (wrong) btn.classList.add('is-wrong');
     // Reflect the answer on the (hidden) keyboard too, so a mid-question switch to Keys reads right.
     piano.clear('is-active');
     piano.highlightPc(q.targetPc, 'is-target');
 
     const reveal = trainer.mode === 'ear' ? ` — that was a <strong>${q.interval.label}</strong>` : '';
-    if (res.result === 'wrong') {
+    if (wrong) {
+      retrying = true;
       els.prompt.className = 'prompt wrong';
       els.prompt.innerHTML = `
         <div class="prompt-kicker">Not quite</div>
         <div class="prompt-query muted">${queryReminder(q)}</div>
         <div class="prompt-result">The answer was <strong>${answerHtml(q)}</strong>${reveal}.</div>
-        <div class="prompt-task muted">You chose ${opt.label}.</div>`;
+        <div class="prompt-task muted">Pick the highlighted note, or press Next.</div>`;
+      // No auto-advance after a miss — wait for the correct pick (or Next).
     } else {
+      retrying = false;
       els.prompt.className = 'prompt correct';
       els.prompt.innerHTML = `
         <div class="prompt-kicker">Correct</div>
         <div class="prompt-result"><strong>${answerHtml(q)}</strong>${reveal}</div>`;
-    }
-    play(q, 'harmonic'); // sound the interval either way, so the right answer is heard
-    if (els.autoAdvance.checked) {
-      advanceTimer = setTimeout(startQuestion, res.result === 'correct' ? AUTO_ADVANCE_MS : 1900);
+      play(q, 'harmonic');
+      if (els.autoAdvance.checked) advanceTimer = setTimeout(startQuestion, AUTO_ADVANCE_MS);
     }
     renderStats();
+    saveState();
+  }
+
+  // The miss has been corrected by picking the highlighted card: confirm and advance,
+  // recording the time-to-correct without changing the (already-counted) score.
+  function confirmCardFound() {
+    retrying = false;
+    clearAdvance();
+    const q = trainer.question;
+    els.flashcards.querySelectorAll('.flashcard').forEach((c) => { c.disabled = true; });
+    els.prompt.className = 'prompt correct';
+    els.prompt.innerHTML = `
+      <div class="prompt-kicker">There it is</div>
+      <div class="prompt-result"><strong>${answerHtml(q)}</strong></div>`;
+    recordTime(q.rootPc, q.semi, Date.now() - questionStartTime);
+    renderHeatmap();
+    play(q, 'harmonic');
+    if (els.autoAdvance.checked) advanceTimer = setTimeout(startQuestion, 900);
     saveState();
   }
 
