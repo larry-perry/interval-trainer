@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#13897b"/>
+      <stop offset="1" stop-color="#0a5a51"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <!-- staff hint: two short manuscript lines -->
+  <g stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" opacity="0.28">
+    <line x1="11" y1="24" x2="53" y2="24"/>
+    <line x1="11" y1="40" x2="53" y2="40"/>
+  </g>
+  <!-- eighth note -->
+  <g fill="#ffffff">
+    <!-- stem -->
+    <rect x="33.4" y="16" width="3.4" height="28.5"/>
+    <!-- flag -->
+    <path d="M36.8 16 c7.2 2.2 10.6 6.6 7.6 13.4 c1.1 -5.4 -2.4 -8.6 -7.6 -9.4 z"/>
+    <!-- note head -->
+    <ellipse cx="26.4" cy="44.2" rx="9.2" ry="7" transform="rotate(-22 26.4 44.2)"/>
+  </g>
+</svg>
