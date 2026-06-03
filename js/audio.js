@@ -12,9 +12,20 @@
 
   let ctx = null;
 
+  // Resume the context whenever it isn't actively running. Backgrounding a tab
+  // leaves the context 'suspended' (most browsers) or 'interrupted' (iOS Safari,
+  // non-standard); both silence playback until resumed. Checking only for
+  // 'suspended' missed the iOS case, which is why sound stayed dead on resume.
+  function resumeIfNeeded() {
+    if (ctx && ctx.state !== 'running' && ctx.state !== 'closed') {
+      return ctx.resume().catch(() => {});
+    }
+    return Promise.resolve();
+  }
+
   function ensure() {
     if (!ctx) ctx = new AudioCtx();
-    if (ctx.state === 'suspended') ctx.resume();
+    resumeIfNeeded();
     return ctx;
   }
 
@@ -23,6 +34,20 @@
     if (!ctx) ctx = new AudioCtx();
     return ctx;
   }
+
+  // Proactively wake the context when the user returns to the tab, rather than
+  // waiting for the next playback call. Some browsers only honour resume() inside
+  // a user gesture, so we also listen for the first interaction as a fallback.
+  function wake() {
+    resumeIfNeeded();
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') wake();
+  });
+  window.addEventListener('focus', wake);
+  window.addEventListener('pointerdown', wake, { passive: true });
+  window.addEventListener('keydown', wake);
+  window.addEventListener('touchstart', wake, { passive: true });
 
   // Play one MIDI note at `delay` seconds from now, lasting `duration` seconds.
   function playMidi(midi, delay = 0, duration = 0.5) {
@@ -114,5 +139,5 @@
     playMidi(rootMidi + semi, 0.5, 0.6);
   }
 
-  App.audio = { ensure, getContext, playMidi, playInterval };
+  App.audio = { ensure, getContext, resumeIfNeeded, playMidi, playInterval };
 })(window.App = window.App || {});
