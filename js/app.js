@@ -40,6 +40,7 @@
     nudgeStrengthLabel: $('#nudgeStrengthLabel'),
     strengthSetting: $('#strengthSetting'),
     circleRoots: $('#circleRoots'),
+    simpleNames: $('#simpleNames'),
     debugWeights: $('#debugWeights'),
     settingsBtn: $('#settingsBtn'),
     settingsModal: $('#settingsModal'),
@@ -256,6 +257,7 @@
         nudgeWeak: els.nudgeWeak.checked,
         nudgeStrength: Number(els.nudgeStrength.value),
         circleRoots: els.circleRoots.checked,
+        simpleNames: els.simpleNames.checked,
         debug: els.debugWeights.checked,
         stats: { ...trainer.stats },
         combos,
@@ -291,6 +293,11 @@
       if (typeof data.circleRoots === 'boolean') {
         els.circleRoots.checked = data.circleRoots;
         trainer.setCircleRoots(data.circleRoots);
+      }
+
+      if (typeof data.simpleNames === 'boolean') {
+        els.simpleNames.checked = data.simpleNames;
+        trainer.setSimpleNames(data.simpleNames);
       }
 
       if (typeof data.debug === 'boolean') {
@@ -386,14 +393,17 @@
   // where OTHER intervals above the same root would land, so every choice reads like
   // a plausible note (and, being different intervals, never collides with the answer).
   function buildChoices(q) {
-    const opts = [{ pc: q.targetPc, label: q.answer.display }];
+    // Spell the correct option live (rather than reusing q.answer) so toggling
+    // "simple note names" mid-question keeps every card on the same convention.
+    const answerLabel = theory.spellName(q.rootDisplay, q.rootPc, q.semi, { simple: trainer.simpleNames }).display;
+    const opts = [{ pc: q.targetPc, label: answerLabel }];
     const used = new Set([q.targetPc]);
     shuffle(theory.INTERVALS.filter((iv) => iv.semi !== q.semi)).forEach((iv) => {
       if (opts.length >= CHOICE_COUNT) return;
       const pc = theory.pitchClass(q.rootPc + iv.semi);
       if (used.has(pc)) return;
       used.add(pc);
-      opts.push({ pc, label: theory.spellName(q.rootDisplay, q.rootPc, iv.semi).display });
+      opts.push({ pc, label: theory.spellName(q.rootDisplay, q.rootPc, iv.semi, { simple: trainer.simpleNames }).display });
     });
     // Pad with random pitch classes if a tiny interval selection didn't yield enough.
     while (opts.length < CHOICE_COUNT) {
@@ -789,6 +799,15 @@
     saveState();
   });
 
+  els.simpleNames.addEventListener('change', () => {
+    trainer.setSimpleNames(els.simpleNames.checked);
+    // Re-render the live question so the change shows immediately.
+    if (trainer.phase === 'awaiting') {
+      if (answerMode === 'cards') renderFlashcards(trainer.question);
+    }
+    saveState();
+  });
+
   els.debugWeights.addEventListener('change', () => {
     trainer.setDebug(els.debugWeights.checked);
     saveState();
@@ -813,6 +832,7 @@
   trainer.setWeakSpotWeighting(els.nudgeWeak.checked);
   trainer.setDebug(els.debugWeights.checked);
   trainer.setCircleRoots(els.circleRoots.checked);
+  trainer.setSimpleNames(els.simpleNames.checked);
   applyStrength();
   applyAnswerMode();
   syncActionEnabled();

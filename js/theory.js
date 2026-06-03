@@ -59,10 +59,17 @@
    * displayed name (which fixes its letter). Returns { display, accurate } where
    * `accurate` is a double-accidental spelling offered when `display` is a
    * simplified enharmonic. */
-  function spellName(rootDisplay, rootPc, semi) {
+  function spellName(rootDisplay, rootPc, semi, { simple = false } = {}) {
+    const targetPc = pitchClass(rootPc + semi);
+
+    // Simple mode: skip letter-step spelling and use a plain 12-name (C, F, …),
+    // matching the root's sharp/flat leaning. Never yields B#/E#/C♭/F♭.
+    if (simple) {
+      return { display: pcName(targetPc, { flat: rootDisplay.includes('♭') }), accurate: null };
+    }
+
     const rootLetterIdx = LETTER_NAMES.indexOf(rootDisplay.charAt(0));
     const targetLetter = LETTER_NAMES[(rootLetterIdx + INTERVAL_LETTER_STEPS[semi]) % 7];
-    const targetPc = pitchClass(rootPc + semi);
     const naturalPc = LETTER_TO_PC[targetLetter];
 
     let diff = targetPc - naturalPc;

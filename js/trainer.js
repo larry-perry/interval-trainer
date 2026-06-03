@@ -28,6 +28,7 @@
     let debug = false;
     let circleRoots = false; // walk roots through the circle of fifths instead of random
     let circleRootPc = null; // last root used while circling; null = restart at C
+    let simpleNames = false; // display plain note names instead of correct enharmonic spellings
 
     const setMode = (m) => { mode = m; };
     const setSelected = (set) => { selected = new Set(set); };
@@ -36,6 +37,7 @@
     const setWeakSpotWeighting = (v) => { weakSpotWeighting = !!v; };
     const setWeakSpotStrength = (v) => { if (Number.isFinite(v)) weakSpotStrength = Math.max(0, v); };
     const setDebug = (v) => { debug = !!v; };
+    const setSimpleNames = (v) => { simpleNames = !!v; };
     const setCircleRoots = (v) => {
       v = !!v;
       if (v !== circleRoots) circleRootPc = null; // restart the circle whenever it toggles
@@ -168,7 +170,7 @@
         audioRootMidi,
         audioTargetMidi: audioRootMidi + semi,
         rootDisplay,
-        answer: spellName(rootDisplay, rootPc, semi), // { display, accurate } — no octave
+        answer: spellName(rootDisplay, rootPc, semi, { simple: simpleNames }), // { display, accurate } — no octave
         interval: intervalBySemi(semi),
       };
       phase = 'awaiting';
@@ -197,7 +199,7 @@
 
     return {
       setMode, setSelected, hasSelection, resetStats, setStats, setCombos,
-      setWeakSpotWeighting, setWeakSpotStrength, setDebug, setCircleRoots,
+      setWeakSpotWeighting, setWeakSpotStrength, setDebug, setCircleRoots, setSimpleNames,
       next, answer, accuracy,
       get mode() { return mode; },
       get phase() { return phase; },
@@ -207,6 +209,7 @@
       get weakSpotStrength() { return weakSpotStrength; },
       get debug() { return debug; },
       get circleRoots() { return circleRoots; },
+      get simpleNames() { return simpleNames; },
     };
   }
 

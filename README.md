@@ -41,6 +41,13 @@ Works in both Reading and Ear mode. (Notes-on-a-staff prompts are the next step 
 **Auto-advance** (toggle, on by default): about a second after a correct answer
 it moves on to the next note automatically. Turn it off to advance manually.
 
+**Note names** — by default the trainer spells answers correctly for the
+interval, so a major 7th above C♯ reads **B♯** (not C) and a major 3rd above C♯
+reads **E♯** (not F): the letter has to be a seventh/third up from the root.
+Scoring is always by pitch class, so playing C for "B♯" still counts. If those
+spellings are more confusing than helpful, flip **Simple note names** in Settings
+to fall back to plain names (C, F, …).
+
 ## Running it
 
 It's plain HTML/CSS/JS — no build step, no dependencies.
