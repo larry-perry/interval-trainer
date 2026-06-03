@@ -284,7 +284,10 @@ body {
 }
 
 /* ---------- actions ---------- */
-.actions { display: flex; gap: 0.7rem; align-items: center; justify-content: center; }
+/* Opaque paper backing so the staff ruling doesn't run through the row — it
+   otherwise shows through the transparent ghost buttons (Replay / Reset) and
+   the gaps, reading as a line across Start/Replay/Reset. */
+.actions { display: flex; gap: 0.7rem; align-items: center; justify-content: center; background: var(--paper); }
 .primary-btn {
   font-family: var(--ui);
   font-size: 0.95rem;
