@@ -40,6 +40,7 @@
     settingsBtn: $('#settingsBtn'),
     settingsModal: $('#settingsModal'),
     settingsClose: $('#settingsClose'),
+    computerKeys: $('#computerKeys'),
   };
 
   // Slider positions → weighting strength fed to the trainer, and their labels.
@@ -53,6 +54,7 @@
   let combos = {};
   let questionStartTime = 0;
   let heatmapMode = 'accuracy';
+  let computerKeys = false; // laptop-keyboard note entry (opt-in; see KEY_NOTES)
   const clearAdvance = () => { if (advanceTimer) { clearTimeout(advanceTimer); advanceTimer = null; } };
 
   // Play a prompt and deafen the mic for the playback window so the speakers
@@ -251,6 +253,7 @@
         nudgeStrength: Number(els.nudgeStrength.value),
         circleRoots: els.circleRoots.checked,
         debug: els.debugWeights.checked,
+        computerKeys,
         stats: { ...trainer.stats },
         combos,
         heatmapMode,
@@ -290,6 +293,11 @@
       if (typeof data.debug === 'boolean') {
         els.debugWeights.checked = data.debug;
         trainer.setDebug(data.debug);
+      }
+
+      if (typeof data.computerKeys === 'boolean') {
+        els.computerKeys.checked = data.computerKeys;
+        computerKeys = data.computerKeys;
       }
 
       if (data.mode === 'play' || data.mode === 'ear') {
@@ -627,10 +635,38 @@
     saveState();
   });
 
-  // Spacebar = Start/Next, R = replay.
+  els.computerKeys.addEventListener('change', () => {
+    computerKeys = els.computerKeys.checked;
+    saveState();
+  });
+
+  // Optional laptop-keyboard note entry. The classic two-row "tracker" layout:
+  // the Z row is one octave (Z = C4), the Q row the octave above (Q = C5), with
+  // the black keys on the staggered keys between them. A press is routed through
+  // the same path as an on-screen tap, so judging/sounding behave identically.
+  const KEY_NOTES = {
+    // lower row — base C4 (60)
+    z: 60, s: 61, x: 62, d: 63, c: 64, v: 65, g: 66, b: 67, h: 68, n: 69, j: 70, m: 71, ',': 72,
+    // upper row — base C5 (72)
+    q: 72, '2': 73, w: 74, '3': 75, e: 76, r: 77, '5': 78, t: 79, '6': 80, y: 81, '7': 82, u: 83, i: 84,
+  };
+
+  // Spacebar = Start/Next, R = replay. With computer-keyboard notes on, the
+  // home-row keys play notes instead (Replay stays on its button).
   document.addEventListener('keydown', (e) => {
     if (els.settingsModal.open) return;
     if (e.target.tagName === 'SELECT') return;
+
+    if (computerKeys && !e.repeat && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      const midi = KEY_NOTES[e.key.toLowerCase()];
+      if (midi !== undefined) {
+        e.preventDefault();
+        audio.ensure();
+        input.feedScreenNote(midi);
+        return;
+      }
+    }
+
     if (e.code === 'Space') { e.preventDefault(); if (!els.actionBtn.disabled) els.actionBtn.click(); }
     else if (e.key === 'r' || e.key === 'R') els.replayBtn.click();
   });
