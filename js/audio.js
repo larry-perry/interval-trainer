@@ -139,5 +139,74 @@
     playMidi(rootMidi + semi, 0.5, 0.6);
   }
 
-  App.audio = { ensure, getContext, resumeIfNeeded, playMidi, playInterval };
+  /* A standalone metronome: a steady click, accenting the downbeat of each bar.
+   * Timing uses the classic "look-ahead" pattern — a coarse setInterval wakes up
+   * often enough to schedule the next few clicks precisely on the audio clock,
+   * so the pulse stays tight even if the JS timer jitters. */
+  function createMetronome() {
+    const BEATS_PER_BAR = 4;
+    const LOOKAHEAD_MS = 25;       // how often the scheduler wakes
+    const SCHEDULE_AHEAD = 0.12;   // seconds of clicks queued on the audio clock
+    let running = false;
+    let bpm = 100;
+    let beat = 0;
+    let nextTime = 0;
+    let timer = null;
+
+    // One click: a short square blip with a fast decay. The downbeat rings higher
+    // and a touch louder so bars are audible.
+    function click(time, accent) {
+      const c = getContext();
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      osc.type = 'square';
+      osc.frequency.value = accent ? 1800 : 1100;
+      const peak = accent ? 0.5 : 0.32;
+      gain.gain.setValueAtTime(0.0001, time);
+      gain.gain.exponentialRampToValueAtTime(peak, time + 0.001);
+      gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.035);
+      osc.connect(gain);
+      gain.connect(c.destination);
+      osc.start(time);
+      osc.stop(time + 0.05);
+    }
+
+    function schedule() {
+      const c = getContext();
+      while (nextTime < c.currentTime + SCHEDULE_AHEAD) {
+        click(nextTime, beat % BEATS_PER_BAR === 0);
+        nextTime += 60 / bpm;
+        beat++;
+      }
+    }
+
+    function start() {
+      if (running) return;
+      ensure(); // create + resume the shared context (called from a user gesture)
+      running = true;
+      beat = 0;
+      nextTime = getContext().currentTime + 0.06;
+      schedule();
+      timer = setInterval(schedule, LOOKAHEAD_MS);
+    }
+
+    function stop() {
+      running = false;
+      if (timer) { clearInterval(timer); timer = null; }
+    }
+
+    function setBpm(v) {
+      bpm = Math.min(208, Math.max(40, Math.round(v) || 100));
+      return bpm;
+    }
+
+    return {
+      start, stop, setBpm,
+      toggle() { running ? stop() : start(); return running; },
+      get running() { return running; },
+      get bpm() { return bpm; },
+    };
+  }
+
+  App.audio = { ensure, getContext, resumeIfNeeded, playMidi, playInterval, metronome: createMetronome() };
 })(window.App = window.App || {});

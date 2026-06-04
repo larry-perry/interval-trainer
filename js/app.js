@@ -41,6 +41,9 @@
     strengthSetting: $('#strengthSetting'),
     circleRoots: $('#circleRoots'),
     debugWeights: $('#debugWeights'),
+    metronomeOn: $('#metronomeOn'),
+    metronomeBpm: $('#metronomeBpm'),
+    metronomeBpmLabel: $('#metronomeBpmLabel'),
     settingsBtn: $('#settingsBtn'),
     settingsModal: $('#settingsModal'),
     settingsClose: $('#settingsClose'),
@@ -257,6 +260,7 @@
         nudgeStrength: Number(els.nudgeStrength.value),
         circleRoots: els.circleRoots.checked,
         debug: els.debugWeights.checked,
+        metronomeBpm: Number(els.metronomeBpm.value),
         stats: { ...trainer.stats },
         combos,
         heatmapMode,
@@ -296,6 +300,14 @@
       if (typeof data.debug === 'boolean') {
         els.debugWeights.checked = data.debug;
         trainer.setDebug(data.debug);
+      }
+
+      // Restore the saved tempo; the metronome itself stays off until the user
+      // toggles it (audio can't start without a gesture anyway).
+      if (data.metronomeBpm >= 40 && data.metronomeBpm <= 208) {
+        const bpm = audio.metronome.setBpm(data.metronomeBpm);
+        els.metronomeBpm.value = bpm;
+        els.metronomeBpmLabel.textContent = bpm;
       }
 
       if (data.mode === 'play' || data.mode === 'ear') {
@@ -791,6 +803,20 @@
 
   els.debugWeights.addEventListener('change', () => {
     trainer.setDebug(els.debugWeights.checked);
+    saveState();
+  });
+
+  // Metronome: a standalone click, independent of the trainer loop. The change
+  // event is a user gesture, so starting here can resume the audio context.
+  els.metronomeOn.addEventListener('change', () => {
+    if (els.metronomeOn.checked) audio.metronome.start();
+    else audio.metronome.stop();
+    saveState();
+  });
+
+  els.metronomeBpm.addEventListener('input', () => {
+    const bpm = audio.metronome.setBpm(Number(els.metronomeBpm.value));
+    els.metronomeBpmLabel.textContent = bpm;
     saveState();
   });
 
