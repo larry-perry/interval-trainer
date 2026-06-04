@@ -128,6 +128,28 @@
             <span class="switch-track"><span class="switch-thumb"></span></span>
           </span>
         </label>
+        <label class="setting">
+          <span class="setting-info">
+            <span class="setting-name">Metronome</span>
+            <span class="setting-desc">A steady click to practice in time, accenting the downbeat of every bar.</span>
+          </span>
+          <span class="switch">
+            <input type="checkbox" id="metronomeOn" />
+            <span class="switch-track"><span class="switch-thumb"></span></span>
+          </span>
+        </label>
+        <div class="setting setting-stack" id="metronomeTempoSetting">
+          <span class="setting-info">
+            <span class="setting-name">Tempo</span>
+            <span class="setting-desc"><strong id="metronomeBpmLabel">100</strong> BPM.</span>
+          </span>
+          <div class="slider-row">
+            <input type="range" id="metronomeBpm" class="slider" min="40" max="208" step="1" value="100" aria-label="Metronome tempo in beats per minute" />
+            <div class="slider-ticks" aria-hidden="true">
+              <span>40</span><span>120</span><span>208</span>
+            </div>
+          </div>
+        </div>
         <label class="setting" id="nudgeSetting">
           <span class="setting-info">
             <span class="setting-name">Nudge weak spots</span>
