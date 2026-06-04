@@ -12,7 +12,7 @@
 (function (App) {
   'use strict';
 
-  const { randomRootName, spellName, pitchClass, intervalBySemi, pcName } = App.theory;
+  const { rootName, spellName, pitchClass, intervalBySemi, pcName } = App.theory;
 
   const AUDIO_OCTAVES = [3, 4, 5]; // octaves the prompt may sound in, for ear variety
 
@@ -28,6 +28,7 @@
     let debug = false;
     let circleRoots = false; // walk roots through the circle of fifths instead of random
     let circleRootPc = null; // last root used while circling; null = restart at C
+    let accidentalStyle = 'mixed'; // how black-key roots are spelled: mixed | flats | sharps
 
     const setMode = (m) => { mode = m; };
     const setSelected = (set) => { selected = new Set(set); };
@@ -36,6 +37,9 @@
     const setWeakSpotWeighting = (v) => { weakSpotWeighting = !!v; };
     const setWeakSpotStrength = (v) => { if (Number.isFinite(v)) weakSpotStrength = Math.max(0, v); };
     const setDebug = (v) => { debug = !!v; };
+    const setAccidentalStyle = (v) => {
+      if (v === 'mixed' || v === 'flats' || v === 'sharps') accidentalStyle = v;
+    };
     const setCircleRoots = (v) => {
       v = !!v;
       if (v !== circleRoots) circleRootPc = null; // restart the circle whenever it toggles
@@ -159,7 +163,7 @@
 
       const octave = AUDIO_OCTAVES[Math.floor(Math.random() * AUDIO_OCTAVES.length)];
       const audioRootMidi = 12 * (octave + 1) + rootPc; // MIDI for pc in this octave
-      const rootDisplay = randomRootName(rootPc);
+      const rootDisplay = rootName(rootPc, accidentalStyle);
 
       question = {
         rootPc,
@@ -168,7 +172,7 @@
         audioRootMidi,
         audioTargetMidi: audioRootMidi + semi,
         rootDisplay,
-        answer: spellName(rootDisplay, rootPc, semi), // { display, accurate } — no octave
+        answer: spellName(rootDisplay, rootPc, semi, accidentalStyle), // { display, accurate } — no octave
         interval: intervalBySemi(semi),
       };
       phase = 'awaiting';
@@ -198,6 +202,7 @@
     return {
       setMode, setSelected, hasSelection, resetStats, setStats, setCombos,
       setWeakSpotWeighting, setWeakSpotStrength, setDebug, setCircleRoots,
+      setAccidentalStyle,
       next, answer, accuracy,
       get mode() { return mode; },
       get phase() { return phase; },
@@ -207,6 +212,7 @@
       get weakSpotStrength() { return weakSpotStrength; },
       get debug() { return debug; },
       get circleRoots() { return circleRoots; },
+      get accidentalStyle() { return accidentalStyle; },
     };
   }
 

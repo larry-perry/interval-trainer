@@ -48,10 +48,13 @@
   // Plain name WITH octave, used for the "note you played" readout: midiName(61) -> "C#4".
   const midiName = (m, { flat = false } = {}) => pcName(m, { flat }) + octaveOf(m);
 
-  // A root name for display: natural for white keys, random sharp/flat for black.
-  function randomRootName(pc) {
+  // A root name for display: natural for white keys; for a black key the accidental
+  // follows the preference ('sharps' | 'flats'), or is picked at random for 'mixed'.
+  function rootName(pc, accidental = 'mixed') {
     pc = pitchClass(pc);
     if (!isBlack(pc)) return NOTE_NAMES_SHARP[pc];
+    if (accidental === 'sharps') return NOTE_NAMES_SHARP[pc];
+    if (accidental === 'flats') return NOTE_NAMES_FLAT[pc];
     return Math.random() < 0.5 ? NOTE_NAMES_SHARP[pc] : NOTE_NAMES_FLAT[pc];
   }
 
@@ -59,7 +62,7 @@
    * displayed name (which fixes its letter). Returns { display, accurate } where
    * `accurate` is a double-accidental spelling offered when `display` is a
    * simplified enharmonic. */
-  function spellName(rootDisplay, rootPc, semi) {
+  function spellName(rootDisplay, rootPc, semi, accidental = 'mixed') {
     const rootLetterIdx = LETTER_NAMES.indexOf(rootDisplay.charAt(0));
     const targetLetter = LETTER_NAMES[(rootLetterIdx + INTERVAL_LETTER_STEPS[semi]) % 7];
     const targetPc = pitchClass(rootPc + semi);
@@ -78,8 +81,12 @@
     else proper = targetLetter;
 
     if (diff === 2 || diff === -2) {
-      let simple = NOTE_NAMES_SHARP[targetPc];
-      if (simple === proper) simple = NOTE_NAMES_FLAT[targetPc];
+      // A double accidental is awkward to read, so offer a simplified enharmonic for
+      // `display` (keeping the precise one as `accurate`). Spell it to match the
+      // accidental preference, falling back to the other side if it collides.
+      const preferFlat = accidental === 'flats';
+      let simple = (preferFlat ? NOTE_NAMES_FLAT : NOTE_NAMES_SHARP)[targetPc];
+      if (simple === proper) simple = (preferFlat ? NOTE_NAMES_SHARP : NOTE_NAMES_FLAT)[targetPc];
       return { display: simple, accurate: proper };
     }
     return { display: proper, accurate: null };
@@ -97,7 +104,7 @@
     isBlack,
     pcName,
     midiName,
-    randomRootName,
+    rootName,
     spellName,
   };
 })(window.App = window.App || {});

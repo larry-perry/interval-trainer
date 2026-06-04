@@ -29,7 +29,8 @@
     micBtn: $('#micBtn'),
     autoAdvance: $('#autoAdvance'),
     resetBtn: $('#resetBtn'),
-    sizeBtns: [...document.querySelectorAll('.size-btn')],
+    sizeBtns: [...document.querySelectorAll('#sizeSwitch .size-btn')],
+    accidentalBtns: [...document.querySelectorAll('#accidentalSwitch [data-accidental]')],
     statsToggle: $('#statsToggle'),
     heatmap: $('#heatmap'),
     heatmapLabel: $('#heatmapLabel'),
@@ -58,6 +59,10 @@
   let questionStartTime = 0;
   let heatmapMode = 'accuracy';
   let answerMode = 'keys'; // 'keys' = play it; 'cards' = pick from multiple choice
+  let accidentalStyle = 'mixed'; // how black-key notes are spelled: mixed | flats | sharps
+  // Static readouts (live note, heatmap) can't be "mixed", so they follow the
+  // preference only when it's 'flats'; otherwise they read as sharps, as before.
+  const useFlats = () => accidentalStyle === 'flats';
   const clearAdvance = () => { if (advanceTimer) { clearTimeout(advanceTimer); advanceTimer = null; } };
 
   // Play a prompt and deafen the mic for the playback window so the speakers
@@ -142,7 +147,7 @@
   }
 
   function setLive(midi) {
-    els.liveNote.textContent = theory.midiName(midi);
+    els.liveNote.textContent = theory.midiName(midi, { flat: useFlats() });
     els.liveLabel.textContent = 'last played';
   }
 
@@ -188,7 +193,7 @@
     for (let pc = 0; pc < 12; pc++) {
       const cell = document.createElement('div');
       cell.className = 'hm-col-head';
-      cell.textContent = theory.pcName(pc);
+      cell.textContent = theory.pcName(pc, { flat: useFlats() });
       hm.appendChild(cell);
     }
 
@@ -211,7 +216,8 @@
         const a = entry ? entry.a : 0;
         const c = entry ? entry.c : 0;
         const targetPc = theory.pitchClass(pc + iv.semi);
-        const targetName = theory.pcName(targetPc);
+        const flat = useFlats();
+        const targetName = theory.pcName(targetPc, { flat });
 
         if (entry && entry.a > 0) {
           if (isTime) {
@@ -232,10 +238,10 @@
           const n = entry ? entry.n : 0;
           const avg = n > 0 ? Math.round(entry.t / n) : 0;
           const label = n > 0 ? avg + 'ms' : '—';
-          cell.title = theory.pcName(pc) + ' + ' + iv.name + ' = ' + targetName + ' — ' + label + ' (' + c + '/' + a + ')';
+          cell.title = theory.pcName(pc, { flat }) + ' + ' + iv.name + ' = ' + targetName + ' — ' + label + ' (' + c + '/' + a + ')';
         } else {
           const acc = a ? c / a : 0;
-          cell.title = theory.pcName(pc) + ' + ' + iv.name + ' = ' + targetName + ' — ' + c + '/' + a + ' (' + Math.round(acc * 100) + '%)';
+          cell.title = theory.pcName(pc, { flat }) + ' + ' + iv.name + ' = ' + targetName + ' — ' + c + '/' + a + ' (' + Math.round(acc * 100) + '%)';
         }
 
         hm.appendChild(cell);
@@ -252,6 +258,7 @@
         mode: trainer.mode,
         keyboardSize,
         answerMode,
+        accidentalStyle,
         autoAdvance: els.autoAdvance.checked,
         nudgeWeak: els.nudgeWeak.checked,
         nudgeStrength: Number(els.nudgeStrength.value),
@@ -311,6 +318,10 @@
 
       if (data.answerMode === 'keys' || data.answerMode === 'cards') {
         answerMode = data.answerMode;
+      }
+
+      if (data.accidentalStyle === 'mixed' || data.accidentalStyle === 'flats' || data.accidentalStyle === 'sharps') {
+        accidentalStyle = data.accidentalStyle;
       }
 
       if (typeof data.autoAdvance === 'boolean') {
@@ -393,14 +404,14 @@
       const pc = theory.pitchClass(q.rootPc + iv.semi);
       if (used.has(pc)) return;
       used.add(pc);
-      opts.push({ pc, label: theory.spellName(q.rootDisplay, q.rootPc, iv.semi).display });
+      opts.push({ pc, label: theory.spellName(q.rootDisplay, q.rootPc, iv.semi, accidentalStyle).display });
     });
     // Pad with random pitch classes if a tiny interval selection didn't yield enough.
     while (opts.length < CHOICE_COUNT) {
       const pc = Math.floor(Math.random() * 12);
       if (used.has(pc)) continue;
       used.add(pc);
-      opts.push({ pc, label: theory.pcName(pc) });
+      opts.push({ pc, label: theory.pcName(pc, { flat: useFlats() }) });
     }
     return shuffle(opts);
   }
@@ -507,6 +518,14 @@
     }
   }
 
+  // Reflect the accidental preference: light the right pill, tell the engine (it spells
+  // the next root), and repaint the heatmap headers, which read sharps unless flats are on.
+  function applyAccidental() {
+    els.accidentalBtns.forEach((b) => b.classList.toggle('active', b.dataset.accidental === accidentalStyle));
+    trainer.setAccidentalStyle(accidentalStyle);
+    renderHeatmap();
+  }
+
   /* ---------- question flow ---------- */
   function startQuestion() {
     clearAdvance();
@@ -568,7 +587,7 @@
         <div class="prompt-kicker">Not quite</div>
         <div class="prompt-query muted">${queryReminder(q)}</div>
         <div class="prompt-result">The answer was <strong>${answerText}</strong>${nameReveal}.</div>
-        <div class="prompt-task muted">You played ${theory.midiName(playedMidi)}.</div>
+        <div class="prompt-task muted">You played ${theory.midiName(playedMidi, { flat: useFlats() })}.</div>
         <div class="prompt-task muted">Find it on your piano.</div>`;
     } else {
       retrying = false;
@@ -633,7 +652,7 @@
 
   // Live "tuner" readout while the mic hears a sustained pitch.
   input.on('pitch', ({ midi, cents }) => {
-    els.liveNote.textContent = theory.midiName(midi);
+    els.liveNote.textContent = theory.midiName(midi, { flat: useFlats() });
     els.liveLabel.textContent = `${cents > 0 ? '+' : ''}${cents}¢`;
     els.liveNote.classList.toggle('in-tune', Math.abs(cents) <= 8);
   });
@@ -753,6 +772,16 @@
     });
   });
 
+  // Accidental preference: how black-key notes are spelled (mixed / flats / sharps).
+  els.accidentalBtns.forEach((b) => {
+    b.addEventListener('click', () => {
+      if (b.dataset.accidental === accidentalStyle) return;
+      accidentalStyle = b.dataset.accidental;
+      applyAccidental();
+      saveState();
+    });
+  });
+
   // Keyboard size: one octave (phone-friendly) vs the full range.
   els.sizeBtns.forEach((b) => {
     b.addEventListener('click', () => {
@@ -815,6 +844,7 @@
   trainer.setCircleRoots(els.circleRoots.checked);
   applyStrength();
   applyAnswerMode();
+  applyAccidental();
   syncActionEnabled();
   showIdlePrompt();
   renderStats();
