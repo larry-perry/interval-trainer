@@ -251,6 +251,37 @@ body {
 .prompt-idle { color: var(--ink-soft); font-size: 1rem; }
 .muted { color: var(--ink-dim); font-weight: 400; }
 
+/* "Read ahead" — a quiet strip under the prompt showing the next interval. Spans the
+   full stage width so it reads as a horizon line below the current question. */
+.next-preview {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.6rem;
+  padding: 0.5rem 0.9rem;
+  border: 1px dashed var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.next-preview[hidden] { display: none; }
+.next-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--ink-dim);
+  align-self: center;
+}
+.next-root {
+  font-family: var(--display);
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--teal-deep);
+}
+.next-iv { font-size: 0.95rem; color: var(--ink-soft); }
+
 /* ---------- stats ---------- */
 .stats {
   display: grid;

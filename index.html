@@ -58,6 +58,7 @@
           <div class="readout-label" id="liveLabel">waiting for a note</div>
         </div>
         <div class="prompt" id="prompt"></div>
+        <div class="next-preview" id="nextPreview" aria-live="polite" hidden></div>
       </section>
 
       <section class="actions" style="--d:4">
@@ -125,6 +126,16 @@
           </span>
           <span class="switch">
             <input type="checkbox" id="autoAdvance" checked />
+            <span class="switch-track"><span class="switch-thumb"></span></span>
+          </span>
+        </label>
+        <label class="setting">
+          <span class="setting-info">
+            <span class="setting-name">Read ahead</span>
+            <span class="setting-desc">Preview the next interval while you work the current one, so you can read ahead. Reading mode only.</span>
+          </span>
+          <span class="switch">
+            <input type="checkbox" id="previewNext" checked />
             <span class="switch-track"><span class="switch-thumb"></span></span>
           </span>
         </label>
