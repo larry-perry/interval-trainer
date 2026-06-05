@@ -27,7 +27,10 @@ defaults to a single, phone-friendly octave, with a **1 octave / Full** toggle.
 **Playing the root is free** — it never counts as a mistake, so you can sound
 the root to orient yourself (handy in Ear mode). On-screen clicks of the root
 play it back. (For the octave interval, only the exact root note is free, since
-the answer shares the root's pitch class.)
+the answer shares the root's pitch class.) Because of this you can **play the
+root and the target together** — e.g. strike C and E at once for a major 3rd —
+and it scores as a hit; the root is ignored and the answer note counts, whichever
+lands first.
 
 **Answer method** (toggle above the keyboard): **Keys** or **Cards**. *Keys* is the
 default — play the note on USB MIDI, the mic, or the on-screen piano. *Cards* turns
