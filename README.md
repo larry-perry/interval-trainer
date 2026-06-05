@@ -41,10 +41,11 @@ Works in both Reading and Ear mode. (Notes-on-a-staff prompts are the next step 
 **Auto-advance** (toggle, on by default): about a second after a correct answer
 it moves on to the next note automatically. Turn it off to advance manually.
 
-**Read ahead** (toggle, on by default): in Reading mode a quiet "Up next" line
-previews the upcoming root and interval, so you can prepare the next answer while
-you finish the current one — the way you read ahead on a score. It's hidden in Ear
-mode (seeing it would give the answer away).
+**Read ahead** (toggle, on by default): in Reading mode a small "Up next" badge
+floats in the top-right corner of the prompt, previewing the upcoming root and
+interval so you can prepare the next answer while you finish the current one — the
+way you read ahead on a score. It's hidden in Ear mode (seeing it would give the
+answer away).
 
 ## Running it
 

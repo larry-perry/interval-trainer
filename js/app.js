@@ -363,10 +363,10 @@
     const show = previewNext && trainer.mode === 'play' && trainer.phase !== 'idle' && !!q;
     el.hidden = !show;
     if (!show) { el.innerHTML = ''; return; }
+    el.title = 'Up next: ' + q.rootDisplay + ' — ' + q.interval.label;
     el.innerHTML = `
       <span class="next-label">Up next</span>
-      <span class="next-root">${q.rootDisplay}</span>
-      <span class="next-iv">${q.interval.label} <span class="muted">(${q.interval.name})</span></span>`;
+      <span class="next-val"><span class="next-root">${q.rootDisplay}</span> <span class="next-iv">${q.interval.name}</span></span>`;
   }
 
   // Repaint key highlights for the current question/phase (used after a rebuild too).
