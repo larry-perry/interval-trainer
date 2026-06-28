@@ -12,6 +12,17 @@ It builds on the interval-trainer idea from
 [TuTempo Academia Musical](https://tutempo.com.co/interval-trainer/): same
 concept, but instead of clicking the answer you play it on your instrument.
 
+## Companion: Melody Trainer
+
+A second, self-contained app lives in **[`melody/`](melody/)** for practicing
+melodies as **relative scale degrees** in a key: hear a short phrase and name it
+by the numbers — in C major, C&nbsp;E&nbsp;D is **1 3 2**. Answer by tapping a
+1–7 number pad, or switch to **Play it** and reproduce the phrase on USB&nbsp;MIDI,
+the mic, or the on-screen keyboard (notes are read as degrees by pitch class, so
+any octave counts). Choose the key and phrase length (3–8 notes). It reuses this
+repo's shared modules (`js/theory.js`, `js/audio.js`, `js/input.js`, `js/piano.js`)
+and deploys alongside the main app at `…/interval-trainer/melody/`.
+
 ## Two modes
 
 - **Reading** — the interval is named (e.g. "G — Major 3rd above"). Play the

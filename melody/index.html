@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Melody Trainer — pick a melody by its scale numbers</title>
+  <meta name="description" content="Practice picking out a melody as relative scale degrees in a key — hear it, then play or tap the numbers (in C major, C-E-D is 1-3-2)." />
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="../favicon.ico" sizes="48x48" />
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+  <meta name="theme-color" content="#0f7a6e" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&family=Fragment+Mono:ital@0;1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/styles.css" />
+  <link rel="stylesheet" href="melody.css" />
+</head>
+<body>
+  <main class="page">
+
+    <header class="masthead">
+      <h1>Melody <em>Trainer</em></h1>
+      <p class="tagline">Hear a short melody, then name it by its <strong>scale numbers</strong> in the key. In C major, C&nbsp;E&nbsp;D is <strong>1&nbsp;3&nbsp;2</strong>. Tap the numbers, or play it on USB&nbsp;MIDI, the&nbsp;mic, or the keys below.</p>
+      <p class="tagline subtle-link"><a href="../index.html">← Interval Trainer</a></p>
+    </header>
+
+    <!-- ===== Setup zone: key, length, and how you'll answer ===== -->
+    <section class="controls melody-controls" style="--d:1">
+      <label class="field">
+        <span class="field-label">Key</span>
+        <select id="keySelect" class="select" aria-label="Key"></select>
+      </label>
+
+      <label class="field">
+        <span class="field-label">Notes <span id="lengthValue" class="field-value">4</span></span>
+        <input type="range" id="lengthRange" class="slider" min="3" max="8" step="1" value="4" aria-label="Melody length" />
+      </label>
+
+      <div class="size-switch" role="group" aria-label="Answer method" id="answerSwitch">
+        <button class="size-btn active" data-answer="numbers" type="button">Numbers</button>
+        <button class="size-btn" data-answer="play" type="button">Play&nbsp;it</button>
+      </div>
+
+      <label class="field field-check">
+        <span class="switch">
+          <input type="checkbox" id="autoAdvance" checked />
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+        </span>
+        <span class="field-label">Auto-advance</span>
+      </label>
+
+      <div class="io" id="ioRow" hidden>
+        <div class="midi-status" title="USB MIDI input">
+          <span class="dot" id="midiDot"></span>
+          <span id="midiText">MIDI off</span>
+          <select id="midiSelect" aria-label="MIDI input device" style="display:none"></select>
+        </div>
+        <button class="ghost-btn" id="micBtn" type="button">Use microphone</button>
+      </div>
+    </section>
+
+    <!-- ===== Play zone: the live loop ===== -->
+    <div class="play-deck">
+      <section class="stage" style="--d:3">
+        <div class="readout" aria-live="polite">
+          <div class="readout-note" id="liveNote">—</div>
+          <div class="readout-label" id="liveLabel">press New melody to begin</div>
+        </div>
+        <div class="prompt melody-prompt" id="prompt">
+          <div class="key-label" id="keyLabel">Key of C major</div>
+          <div class="progress" id="progress"></div>
+        </div>
+      </section>
+
+      <section class="actions" style="--d:4">
+        <button class="primary-btn" id="actionBtn" type="button">New melody</button>
+        <button class="ghost-btn" id="replayBtn" type="button" disabled>Replay&nbsp;⟳</button>
+        <button class="ghost-btn" id="keyRefBtn" type="button" disabled>Key&nbsp;♪</button>
+        <button class="ghost-btn subtle-btn" id="clearBtn" type="button" disabled>Clear entry</button>
+        <button class="ghost-btn subtle-btn" id="resetBtn" type="button">Reset score</button>
+      </section>
+
+      <section class="keyboard" style="--d:5">
+        <div class="keyboard-bar">
+          <span class="section-label" id="inputLabel">Tap the scale numbers</span>
+        </div>
+
+        <!-- Numbers answer surface -->
+        <div class="number-pad" id="numberPad"></div>
+
+        <!-- Play-it answer surface -->
+        <div class="piano-wrapper" id="pianoWrapper" hidden></div>
+      </section>
+    </div>
+
+    <!-- ===== Results ===== -->
+    <section class="stats" style="--d:6">
+      <div class="stat"><span class="stat-num" id="statCorrect">0</span><span class="stat-key">melodies</span></div>
+      <div class="stat"><span class="stat-num" id="statWrong">0</span><span class="stat-key">missed</span></div>
+      <div class="stat"><span class="stat-num" id="statStreak">0</span><span class="stat-key">streak</span></div>
+      <div class="stat"><span class="stat-num" id="statAccuracy">0%</span><span class="stat-key">note accuracy</span></div>
+    </section>
+
+    <footer class="foot">
+      A companion to the Interval Trainer — same engine, listening for the notes you play; here you name them by their number in the key.
+    </footer>
+
+  </main>
+
+  <script src="../js/theory.js"></script>
+  <script src="../js/audio.js"></script>
+  <script src="../js/pitch.js"></script>
+  <script src="../js/piano.js"></script>
+  <script src="../js/input.js"></script>
+  <script src="melody.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
