@@ -139,5 +139,23 @@
     playMidi(rootMidi + semi, 0.5, 0.6);
   }
 
-  App.audio = { ensure, getContext, resumeIfNeeded, playMidi, playInterval };
+  /* Play a list of MIDI notes one after another (a melody). Returns the total
+   * playback time in seconds so callers can gate the mic for the right window. */
+  function playSequence(midis, { noteDur = 0.45, gap = 0.12, startDelay = 0 } = {}) {
+    ensure();
+    let t = startDelay;
+    midis.forEach((m) => {
+      playMidi(m, t, noteDur);
+      t += noteDur + gap;
+    });
+    return t;
+  }
+
+  /* Play several MIDI notes together (a chord) — used to sound a key reference. */
+  function playChord(midis, dur = 0.8) {
+    ensure();
+    midis.forEach((m) => playMidi(m, 0, dur));
+  }
+
+  App.audio = { ensure, getContext, resumeIfNeeded, playMidi, playInterval, playSequence, playChord };
 })(window.App = window.App || {});

@@ -105,6 +105,14 @@ body {
   color: var(--ink-soft);
   font-size: 0.95rem;
 }
+.tagline.subtle-link { margin-top: 0.35rem; }
+.tagline.subtle-link a {
+  color: var(--teal-deep);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+.tagline.subtle-link a:hover { text-decoration: underline; }
 
 /* ---------- controls row ---------- */
 .controls {
