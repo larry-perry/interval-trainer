@@ -34,6 +34,15 @@
     { name: 'F',  pc: 5 },
   ];
 
+  // The note pools an "easier" melody can draw from. `triad` is the tonic
+  // arpeggio (do-mi-sol) — the gentlest ear, no half-step tendency tones; `full`
+  // is the whole major scale (today's default). Each lists pitch-class degrees
+  // 1..7; `degreesForSet` tiles them across the octave(s) actually in play.
+  const NOTE_SETS = {
+    triad: { label: 'Triad (1·3·5)',   base: [1, 3, 5] },
+    full:  { label: 'Full scale (1–7)', base: [1, 2, 3, 4, 5, 6, 7] },
+  };
+
   const keyByName = (name) => KEYS.find((k) => k.name === name) || KEYS[0];
 
   // A random key from the twelve — used by the "Random key each round" option.
@@ -68,29 +77,70 @@
     return spellName(key.name, key.pc, MAJOR_OFFSETS[degree - 1]).display;
   }
 
+  // The actual scale degrees a melody may use, given a note set and whether it
+  // may climb over the octave. Returns the in-key degrees (e.g. triad -> [1,3,5],
+  // or [1,3,5,8] with the octave on) in ascending order — the pool the generator
+  // walks. Over-octave extends one octave up, matching the full scale's 1..9.
+  function degreesForSet(setName, { overOctave = false } = {}) {
+    const base = (NOTE_SETS[setName] || NOTE_SETS.full).base;
+    const max = overOctave ? 9 : 7;
+    const out = [];
+    for (let d = 1; d <= max; d++) {
+      if (base.includes(pcDegree(d))) out.push(d);
+    }
+    return out;
+  }
+
   /* Build a melody as an array of scale degrees of the given length. Lines lean
    * stepwise with the occasional small leap — like real melodies, so they're
    * singable and learnable rather than random scatter — and start on a stable
-   * tone (1, 3, or 5). Motion is kept inside [minDegree, maxDegree]; the default
-   * 1..7 stays within one octave, while a higher maxDegree lets the line climb
-   * over the octave mark (8, 9, …). Degrees are still answered by pitch class. */
-  function generateMelody(length, { rng = Math.random, minDegree = 1, maxDegree = 7 } = {}) {
-    const stableStarts = [1, 3, 5];
-    let prev = stableStarts[Math.floor(rng() * stableStarts.length)];
-    const degrees = [prev];
+   * tone (1, 3, or 5).
+   *
+   * Motion walks the `allowedDegrees` pool by *adjacency within the pool*, not by
+   * raw degree, so a triad pool [1,3,5] moves 1→3→5 as "steps" (an arpeggio)
+   * rather than as leaps. Options make a melody easier:
+   *   allowedDegrees — the note pool to draw from (default: the full scale 1..7).
+   *   startOnTonic   — pin the first note to degree 1 for a fixed anchor.
+   *   stepwiseOnly   — only move to the adjacent pool tone (no leaps).
+   * Degrees are still answered by pitch class. */
+  function generateMelody(length, {
+    rng = Math.random,
+    allowedDegrees = [1, 2, 3, 4, 5, 6, 7],
+    startOnTonic = false,
+    stepwiseOnly = false,
+  } = {}) {
+    const pool = allowedDegrees.length ? allowedDegrees : [1];
+    const top = pool.length - 1;
 
+    // Where to begin: the tonic when pinned, else a stable tone (1/3/5) that's
+    // actually in the pool, else the lowest available tone.
+    let idx;
+    if (startOnTonic && pool.includes(1)) {
+      idx = pool.indexOf(1);
+    } else {
+      const stable = [1, 3, 5].filter((d) => pool.includes(d));
+      const pick = stable.length ? stable[Math.floor(rng() * stable.length)] : pool[0];
+      idx = pool.indexOf(pick);
+    }
+
+    const degrees = [pool[idx]];
     for (let i = 1; i < length; i++) {
+      if (top === 0) { degrees.push(pool[0]); continue; }
       let next;
       do {
-        const r = rng();
-        let step;
-        if (r < 0.6) step = rng() < 0.5 ? -1 : 1;        // step (most common)
-        else if (r < 0.85) step = rng() < 0.5 ? -2 : 2;  // a third
-        else step = rng() < 0.5 ? -3 : 3;                // a wider leap
-        next = prev + step;
-      } while (next < minDegree || next > maxDegree);
-      degrees.push(next);
-      prev = next;
+        let span;
+        if (stepwiseOnly) {
+          span = 1;                                      // adjacent pool tone only
+        } else {
+          const r = rng();
+          if (r < 0.6) span = 1;                         // a step (most common)
+          else if (r < 0.85) span = 2;                   // a skip
+          else span = 3;                                 // a wider leap
+        }
+        next = idx + (rng() < 0.5 ? -span : span);
+      } while (next < 0 || next > top);
+      idx = next;
+      degrees.push(pool[idx]);
     }
     return degrees;
   }
@@ -98,12 +148,14 @@
   App.melody = {
     MAJOR_OFFSETS,
     KEYS,
+    NOTE_SETS,
     keyByName,
     randomKey,
     degreeToMidi,
     pcDegree,
     midiToDegree,
     degreeName,
+    degreesForSet,
     generateMelody,
   };
 })(window.App = window.App || {});
