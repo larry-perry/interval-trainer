@@ -157,5 +157,46 @@
     midis.forEach((m) => playMidi(m, 0, dur));
   }
 
-  App.audio = { ensure, getContext, resumeIfNeeded, playMidi, playInterval, playSequence, playChord };
+  /* Play a quiet sustained drone on the given MIDI notes — a soft, organ-ish
+   * pad that holds a tonal centre under the melody. Unlike `playChord` (a
+   * struck, decaying piano voice), this fades in, holds steady at a low level
+   * for `duration` seconds, then fades out, so it sits in the background as a
+   * reference rather than competing with the line. The first note carries a
+   * gentle octave partial for warmth; any extras (e.g. the fifth) are softer. */
+  function playDrone(midis, duration = 2.5, gain = 0.06) {
+    ensure();
+    const now = ctx.currentTime;
+    const attack = 0.3;
+    const release = 0.6;
+    const hold = Math.max(attack, duration - release);
+
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(0.0001, now);
+    master.gain.exponentialRampToValueAtTime(gain, now + attack);
+    master.gain.setValueAtTime(gain, now + hold);
+    master.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    master.connect(ctx.destination);
+
+    const stopTime = now + duration + 0.1;
+    midis.forEach((m, idx) => {
+      const freq = midiToFreq(m);
+      const partials = idx === 0
+        ? [{ ratio: 1, amp: 1.0 }, { ratio: 2, amp: 0.2 }]
+        : [{ ratio: 1, amp: 0.55 }];
+      partials.forEach((p) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = freq * p.ratio;
+        const g = ctx.createGain();
+        g.gain.value = p.amp;
+        osc.connect(g);
+        g.connect(master);
+        osc.start(now);
+        osc.stop(stopTime);
+      });
+    });
+    return duration;
+  }
+
+  App.audio = { ensure, getContext, resumeIfNeeded, playMidi, playInterval, playSequence, playChord, playDrone };
 })(window.App = window.App || {});

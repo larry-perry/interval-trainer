@@ -24,6 +24,7 @@
     startOnTonic: false,   // pin the first note to degree 1
     stepwiseOnly: false,   // move only to the adjacent pool tone (no leaps)
     slowReplay: false,     // play slower and auto-replay once
+    drone: false,          // sound the key reference as a quiet sustained drone
     stats: { correct: 0, wrong: 0, streak: 0, notesRight: 0, notesTotal: 0 },
   };
   let settings = load();
@@ -53,6 +54,7 @@
     startOnTonic: $('startOnTonic'),
     stepwiseOnly: $('stepwiseOnly'),
     slowReplay: $('slowReplay'),
+    drone: $('drone'),
     ioRow: $('ioRow'),
     midiDot: $('midiDot'),
     midiText: $('midiText'),
@@ -185,9 +187,18 @@
     return melodyDegrees.map((d) => M.degreeToMidi(tonicMidi, d));
   }
 
-  function soundKeyRef() {
-    audio.playChord([tonicMidi, tonicMidi + 4, tonicMidi + 7], 0.75);
-    input.suppressMic(900);
+  // Sound the key's tonal centre. By default this is a struck I chord; with the
+  // "Drone reference" option on it's a quiet sustained tonic-and-fifth drone.
+  // `holdFor` lets a caller (the melody playback) stretch the drone so it holds
+  // under the whole line; the standalone "Key ♪" button uses a short default.
+  function soundKeyRef({ holdFor = 2.4 } = {}) {
+    if (settings.drone) {
+      const dur = audio.playDrone([tonicMidi, tonicMidi + 7], holdFor);
+      input.suppressMic(dur * 1000 + 200);
+    } else {
+      audio.playChord([tonicMidi, tonicMidi + 4, tonicMidi + 7], 0.75);
+      input.suppressMic(900);
+    }
   }
 
   function playMelody({ withKeyRef = false } = {}) {
@@ -197,12 +208,23 @@
     const slow = settings.slowReplay;
     const noteDur = slow ? 0.7 : 0.45;
     const gap = slow ? 0.18 : 0.12;
+    const midis = currentMelodyMidis();
+
     let startDelay = 0;
     if (withKeyRef) {
-      soundKeyRef();
-      startDelay = 0.95; // let the chord ring before the line starts
+      if (settings.drone) {
+        // A drone comes in fast and holds *under* the line rather than ringing
+        // out before it — so just a short breath, then keep it sounding through
+        // both passes of the melody.
+        startDelay = 0.55;
+        const passes = slow ? 2 : 1;
+        const lineTime = midis.length * (noteDur + gap) * passes + (slow ? 0.6 : 0);
+        soundKeyRef({ holdFor: startDelay + lineTime + 0.4 });
+      } else {
+        soundKeyRef();
+        startDelay = 0.95; // let the chord ring before the line starts
+      }
     }
-    const midis = currentMelodyMidis();
     let total = audio.playSequence(midis, { noteDur, gap, startDelay });
     if (slow) {
       total = audio.playSequence(midis, { noteDur, gap, startDelay: total + 0.6 });
@@ -451,6 +473,11 @@
     save();
   });
 
+  els.drone.addEventListener('change', () => {
+    settings.drone = els.drone.checked;
+    save();
+  });
+
   els.actionBtn.addEventListener('click', () => { audio.ensure(); newMelody(); });
   els.replayBtn.addEventListener('click', () => playMelody());
   els.keyRefBtn.addEventListener('click', () => soundKeyRef());
@@ -481,6 +508,7 @@
   els.startOnTonic.checked = settings.startOnTonic;
   els.stepwiseOnly.checked = settings.stepwiseOnly;
   els.slowReplay.checked = settings.slowReplay;
+  els.drone.checked = settings.drone;
   els.keyLabel.textContent = settings.keyName === 'random'
     ? 'Random key each round'
     : `Key of ${key.name} major`;
