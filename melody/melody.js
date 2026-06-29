@@ -63,7 +63,7 @@
    * they're singable and learnable rather than random scatter — and start on a
    * stable tone (1, 3, or 5). All motion is kept inside the 1..7 octave. */
   function generateMelody(length, { rng = Math.random } = {}) {
-    const stableStarts = [1, 1, 3, 5];
+    const stableStarts = [1, 3, 5];
     let prev = stableStarts[Math.floor(rng() * stableStarts.length)];
     const degrees = [prev];
 
