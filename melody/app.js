@@ -81,6 +81,10 @@
   /* ---------- setup the static controls ---------- */
   function buildKeySelect() {
     els.keySelect.innerHTML = '';
+    const rnd = document.createElement('option');
+    rnd.value = 'random';
+    rnd.textContent = 'Random key';
+    els.keySelect.appendChild(rnd);
     M.KEYS.forEach((k) => {
       const opt = document.createElement('option');
       opt.value = k.name;
@@ -176,8 +180,14 @@
     input.suppressMic(total * 1000 + 250);
   }
 
+  // The key for a round: a fresh random one each time when "Random key" is
+  // chosen, otherwise the fixed key from the dropdown.
+  function pickKeyForRound() {
+    return settings.keyName === 'random' ? M.randomKey() : M.keyByName(settings.keyName);
+  }
+
   function newMelody() {
-    key = M.keyByName(settings.keyName);
+    key = pickKeyForRound();
     tonicMidi = 60 + key.pc;
     melodyDegrees = M.generateMelody(settings.length);
     entries = [];
@@ -352,6 +362,12 @@
   els.keySelect.addEventListener('change', () => {
     settings.keyName = els.keySelect.value;
     save();
+    if (settings.keyName === 'random') {
+      // The actual key is drawn when the next melody starts; until then keep the
+      // current pad names and just say what's coming.
+      els.keyLabel.textContent = 'Random key each round';
+      return;
+    }
     key = M.keyByName(settings.keyName);
     tonicMidi = 60 + key.pc;
     refreshPadNames();
@@ -399,7 +415,9 @@
   els.lengthRange.value = settings.length;
   els.lengthValue.textContent = settings.length;
   els.autoAdvance.checked = settings.autoAdvance;
-  els.keyLabel.textContent = `Key of ${key.name} major`;
+  els.keyLabel.textContent = settings.keyName === 'random'
+    ? 'Random key each round'
+    : `Key of ${key.name} major`;
   renderStats();
   setAnswerMode(settings.answerMode);
 })(window.App = window.App || {});
