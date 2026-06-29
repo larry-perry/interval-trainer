@@ -20,6 +20,7 @@
     let mode = 'play';
     let selected = new Set();
     let question = null;
+    let pending = null; // the next question, generated ahead so the UI can preview it ("read ahead")
     let phase = 'idle'; // idle | awaiting | answered
     const stats = { correct: 0, wrong: 0, streak: 0, best: 0, total: 0 };
     let combosData = {}; // optional: { 'rootPc:semi': { a, c, t, n } }
@@ -30,7 +31,9 @@
     let circleRootPc = null; // last root used while circling; null = restart at C
 
     const setMode = (m) => { mode = m; };
-    const setSelected = (set) => { selected = new Set(set); };
+    // Changing the selection can invalidate the previewed question (it may use an
+    // interval that's no longer picked), so drop it — next() will regenerate.
+    const setSelected = (set) => { selected = new Set(set); pending = null; };
     const hasSelection = () => selected.size > 0;
     const setCombos = (data) => { combosData = data || {}; };
     const setWeakSpotWeighting = (v) => { weakSpotWeighting = !!v; };
@@ -38,7 +41,7 @@
     const setDebug = (v) => { debug = !!v; };
     const setCircleRoots = (v) => {
       v = !!v;
-      if (v !== circleRoots) circleRootPc = null; // restart the circle whenever it toggles
+      if (v !== circleRoots) { circleRootPc = null; pending = null; } // restart the circle (and its preview) whenever it toggles
       circleRoots = v;
     };
 
@@ -109,7 +112,10 @@
       return pool[pool.length - 1];
     }
 
-    function next() {
+    // Build a fresh question from the current selection/settings. Pure aside from
+    // advancing the circle-of-fifths cursor; `avoidRootPc` discourages an immediate
+    // root repeat. Returns null if nothing is selected (or the pool is empty).
+    function generateQuestion(avoidRootPc) {
       if (!hasSelection()) return null;
       const semis = [...selected];
 
@@ -141,14 +147,14 @@
           if (!key) return null;
           [rootPc, semi] = key.split(':').map(Number);
           attempts++;
-        } while (question && rootPc === question.rootPc && attempts < 40);
+        } while (avoidRootPc != null && rootPc === avoidRootPc && attempts < 40);
         if (debug) logWeights(pool, key);
       } else {
         do {
           semi = semis[Math.floor(Math.random() * semis.length)];
           rootPc = Math.floor(Math.random() * 12);
           attempts++;
-        } while (question && rootPc === question.rootPc && attempts < 40);
+        } while (avoidRootPc != null && rootPc === avoidRootPc && attempts < 40);
         if (debug) {
           const reason = weakSpotWeighting
             ? 'weak-spot nudge on, but no attempt history yet'
@@ -161,7 +167,7 @@
       const audioRootMidi = 12 * (octave + 1) + rootPc; // MIDI for pc in this octave
       const rootDisplay = randomRootName(rootPc);
 
-      question = {
+      return {
         rootPc,
         semi,
         targetPc: pitchClass(rootPc + semi),
@@ -171,7 +177,18 @@
         answer: spellName(rootDisplay, rootPc, semi), // { display, accurate } — no octave
         interval: intervalBySemi(semi),
       };
+    }
+
+    function next() {
+      if (!hasSelection()) return null;
+      // Consume the previewed question if we have one (it was built to follow the
+      // current root); otherwise make one now. Then look one ahead so the UI can
+      // show what's coming — "read ahead" — and so the circle/weighting stay in step.
+      const q = pending || generateQuestion(question ? question.rootPc : null);
+      if (!q) return null;
+      question = q;
       phase = 'awaiting';
+      pending = generateQuestion(question.rootPc);
       return question;
     }
 
@@ -202,6 +219,7 @@
       get mode() { return mode; },
       get phase() { return phase; },
       get question() { return question; },
+      get peek() { return pending; },
       get stats() { return stats; },
       get weakSpotWeighting() { return weakSpotWeighting; },
       get weakSpotStrength() { return weakSpotStrength; },

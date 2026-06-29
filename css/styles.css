@@ -259,6 +259,43 @@ body {
 .prompt-idle { color: var(--ink-soft); font-size: 1rem; }
 .muted { color: var(--ink-dim); font-weight: 400; }
 
+/* "Read ahead" — a small badge floating over the top-right corner of the prompt,
+   previewing the next interval so you can prepare while finishing the current one. */
+.prompt-wrap { position: relative; }
+.next-preview {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.1rem;
+  padding: 0.3rem 0.55rem;
+  border: 1px dashed var(--line);
+  border-radius: calc(var(--r) - 4px);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  text-align: right;
+  pointer-events: none; /* it's a hint, not a control — never eat a tap meant for the prompt */
+}
+.next-preview[hidden] { display: none; }
+.next-label {
+  font-size: 0.56rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ink-dim);
+}
+.next-val { display: flex; align-items: baseline; gap: 0.3rem; }
+.next-root {
+  font-family: var(--display);
+  font-size: 1.05rem;
+  line-height: 1;
+  color: var(--teal-deep);
+}
+.next-iv { font-size: 0.85rem; color: var(--ink-soft); }
+
 /* ---------- stats ---------- */
 .stats {
   display: grid;

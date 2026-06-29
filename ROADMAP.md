@@ -25,7 +25,10 @@ A good chunk of the original wishlist has landed:
 - **Microphone pitch detection** (autocorrelation) feeding the shared input layer.
 - **Circle-of-fifths root walk.** Optional: roots step C → G → D → A … through all
   twelve keys instead of being picked at random. Off by default.
-- **Settings modal** consolidating auto-advance, the weak-spot nudge, and debug.
+- **Settings modal** consolidating auto-advance, read-ahead, the weak-spot nudge, and debug.
+- **Read-ahead preview.** In Reading mode an "Up next" line shows the upcoming root
+  and interval so you can prepare while finishing the current one. Toggle, on by
+  default; hidden in Ear mode so it can't spoil the answer.
 - **★ Flashcard / multiple-choice answers.** A *Keys / Cards* toggle: instead of
   playing the note, pick from four note-name cards (distractors are the notes other
   intervals above the same root would produce). Works in both Reading and Ear mode.

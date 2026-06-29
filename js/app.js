@@ -10,6 +10,7 @@
     modeBtns: [...document.querySelectorAll('.mode-btn')],
     intervalSelector: $('#intervalSelector'),
     prompt: $('#prompt'),
+    nextPreview: $('#nextPreview'),
     liveNote: $('#liveNote'),
     liveLabel: $('#liveLabel'),
     statCorrect: $('#statCorrect'),
@@ -28,6 +29,7 @@
     midiText: $('#midiText'),
     micBtn: $('#micBtn'),
     autoAdvance: $('#autoAdvance'),
+    previewNext: $('#previewNext'),
     resetBtn: $('#resetBtn'),
     sizeBtns: [...document.querySelectorAll('.size-btn')],
     statsToggle: $('#statsToggle'),
@@ -58,6 +60,7 @@
   let questionStartTime = 0;
   let heatmapMode = 'accuracy';
   let answerMode = 'keys'; // 'keys' = play it; 'cards' = pick from multiple choice
+  let previewNext = true; // "read ahead": show the upcoming interval while you work the current one
   const clearAdvance = () => { if (advanceTimer) { clearTimeout(advanceTimer); advanceTimer = null; } };
 
   // Play a prompt and deafen the mic for the playback window so the speakers
@@ -114,6 +117,7 @@
       els.modeBtns.forEach((x) => x.classList.toggle('active', x === b));
       trainer.setMode(b.dataset.mode);
       if (trainer.phase === 'idle') showIdlePrompt();
+      else renderPreview(); // mid-question: Ear hides the read-ahead, Reading shows it
       saveState();
     });
   });
@@ -253,6 +257,7 @@
         keyboardSize,
         answerMode,
         autoAdvance: els.autoAdvance.checked,
+        previewNext,
         nudgeWeak: els.nudgeWeak.checked,
         nudgeStrength: Number(els.nudgeStrength.value),
         circleRoots: els.circleRoots.checked,
@@ -317,6 +322,11 @@
         els.autoAdvance.checked = data.autoAdvance;
       }
 
+      if (typeof data.previewNext === 'boolean') {
+        previewNext = data.previewNext;
+        els.previewNext.checked = data.previewNext;
+      }
+
       if (data.stats && typeof data.stats === 'object') {
         trainer.setStats(data.stats);
       }
@@ -335,11 +345,28 @@
 
   function showIdlePrompt() {
     if (els.flashcards) els.flashcards.innerHTML = '';
+    renderPreview();
     els.prompt.className = 'prompt';
     const verb = trainer.mode === 'ear' ? 'Listen, then play what you hear' : 'Play the named interval';
     els.prompt.innerHTML = `
       <div class="prompt-kicker">${trainer.mode === 'ear' ? 'Ear training' : 'Interval reading'}</div>
       <div class="prompt-idle">${verb}.<br>Pick intervals below and press <strong>Start</strong>.</div>`;
+  }
+
+  // "Read ahead" — show the upcoming root + interval so the player can prepare while
+  // finishing the current one. Reading mode only: revealing it in Ear mode would spoil
+  // the answer. Hidden when idle, off, or before a question is in flight.
+  function renderPreview() {
+    const el = els.nextPreview;
+    if (!el) return;
+    const q = trainer.peek;
+    const show = previewNext && trainer.mode === 'play' && trainer.phase !== 'idle' && !!q;
+    el.hidden = !show;
+    if (!show) { el.innerHTML = ''; return; }
+    el.title = 'Up next: ' + q.rootDisplay + ' — ' + q.interval.label;
+    el.innerHTML = `
+      <span class="next-label">Up next</span>
+      <span class="next-val"><span class="next-root">${q.rootDisplay}</span> <span class="next-iv">${q.interval.name}</span></span>`;
   }
 
   // Repaint key highlights for the current question/phase (used after a rebuild too).
@@ -538,6 +565,7 @@
     if (answerMode === 'cards') renderFlashcards(q);
     else els.flashcards.innerHTML = '';
 
+    renderPreview();
     els.replayBtn.disabled = false;
     els.actionBtn.textContent = 'Next';
     renderStats();
@@ -774,6 +802,12 @@
   });
 
   els.autoAdvance.addEventListener('change', saveState);
+
+  els.previewNext.addEventListener('change', () => {
+    previewNext = els.previewNext.checked;
+    renderPreview();
+    saveState();
+  });
 
   els.nudgeWeak.addEventListener('change', () => {
     trainer.setWeakSpotWeighting(els.nudgeWeak.checked);

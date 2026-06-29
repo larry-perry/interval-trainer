@@ -52,6 +52,12 @@ Works in both Reading and Ear mode. (Notes-on-a-staff prompts are the next step 
 **Auto-advance** (toggle, on by default): about a second after a correct answer
 it moves on to the next note automatically. Turn it off to advance manually.
 
+**Read ahead** (toggle, on by default): in Reading mode a small "Up next" badge
+floats in the top-right corner of the prompt, previewing the upcoming root and
+interval so you can prepare the next answer while you finish the current one — the
+way you read ahead on a score. It's hidden in Ear mode (seeing it would give the
+answer away).
+
 ## Running it
 
 It's plain HTML/CSS/JS — no build step, no dependencies.
@@ -116,6 +122,7 @@ Done so far:
 - [x] Learn-from-the-miss loop (hunt for the right note, auto-advance unscored)
 - [x] Weak-spot weighting with a Gentle/Medium/Strong strength control
 - [x] Circle-of-fifths root walk (option, off by default) instead of random roots
+- [x] Read-ahead preview of the next interval (Reading mode)
 - [x] Settings modal
 
 Planned features and ideas live in **[ROADMAP.md](ROADMAP.md)** — including a
