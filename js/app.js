@@ -51,7 +51,9 @@
   const STRENGTH_LABELS = { 1: 'Gentle', 2: 'Medium', 3: 'Strong' };
 
   const AUTO_ADVANCE_MS = 1100; // ~1s after a correct answer, per request
+  const CHORD_WINDOW_MS = 120;  // how long a non-target note waits for the target (play both together)
   let advanceTimer = null;
+  let pendingWrong = null; // { midi, timer } — a maybe-miss held while a chord finishes landing
   let retrying = false;
   let lastJudged = null; // { playedMidi, result } — kept so we can re-paint on a keyboard rebuild
   let combos = {};
@@ -59,6 +61,7 @@
   let heatmapMode = 'accuracy';
   let answerMode = 'keys'; // 'keys' = play it; 'cards' = pick from multiple choice
   const clearAdvance = () => { if (advanceTimer) { clearTimeout(advanceTimer); advanceTimer = null; } };
+  const clearPendingWrong = () => { if (pendingWrong) { clearTimeout(pendingWrong.timer); pendingWrong = null; } };
 
   // Play a prompt and deafen the mic for the playback window so the speakers
   // aren't mistaken for the player. The prompt sounds in its randomized octave.
@@ -510,6 +513,7 @@
   /* ---------- question flow ---------- */
   function startQuestion() {
     clearAdvance();
+    clearPendingWrong();
     retrying = false;
     lastJudged = null;
     const q = trainer.next();
@@ -621,14 +625,39 @@
     }
     if (trainer.phase !== 'awaiting') return;
 
+    const q = trainer.question;
+    const pc = theory.pitchClass(midi);
+
     // Playing the root is "free" — any octave of it lets you orient without being
     // judged. (No interval here lands on the root's own pitch class, so this is safe.)
-    const q = trainer.question;
-    if (theory.pitchClass(midi) === q.rootPc) {
+    if (pc === q.rootPc) {
       if (source === 'screen') { audio.playMidi(midi, 0, 0.5); input.suppressMic(700); }
       return;
     }
-    judge(midi);
+
+    // The target note scores immediately. If a non-target note landed a moment ago,
+    // it was just the other half of a chord (e.g. C and E struck together) — drop
+    // that pending verdict and take the answer.
+    if (pc === q.targetPc) {
+      clearPendingWrong();
+      judge(midi);
+      return;
+    }
+
+    // Some other note. It might be a lone wrong answer, or simply the first key of a
+    // chord whose target is still on its way. Hold the verdict for a beat: if the
+    // target arrives within the chord window the dyad counts (handled above); if not,
+    // it's a genuine miss. Keep the first such note as the one we judge.
+    if (!pendingWrong) {
+      pendingWrong = {
+        midi,
+        timer: setTimeout(() => {
+          const m = pendingWrong.midi;
+          pendingWrong = null;
+          judge(m);
+        }, CHORD_WINDOW_MS),
+      };
+    }
   });
 
   // Live "tuner" readout while the mic hears a sustained pitch.
@@ -748,6 +777,7 @@
     b.addEventListener('click', () => {
       if (b.dataset.answer === answerMode) return;
       answerMode = b.dataset.answer;
+      clearPendingWrong();
       applyAnswerMode();
       saveState();
     });
