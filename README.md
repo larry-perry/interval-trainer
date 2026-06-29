@@ -19,7 +19,15 @@ melodies as **relative scale degrees** in a key: hear a short phrase and name it
 by the numbers — in C major, C&nbsp;E&nbsp;D is **1 3 2**. Answer by tapping a
 1–7 number pad, or switch to **Play it** and reproduce the phrase on USB&nbsp;MIDI,
 the mic, or the on-screen keyboard (notes are read as degrees by pitch class, so
-any octave counts). Choose the key and phrase length (3–8 notes). It reuses this
+any octave counts). Choose the key and phrase length (3–8 notes).
+
+**Easier versions** make the ear-training ramp gentler. A **Note set** selector
+restricts which notes melodies are built from: **Triad (1·3·5)** is a tonic
+arpeggio — no half-step tendency tones — versus the **Full scale (1–7)** default.
+Three independent helpers stack on top: **Start on 1** anchors every phrase to the
+tonic, **Stepwise only** removes leaps (motion is to the adjacent note in the set,
+so a triad walks 1→3→5 as steps), and **Slower + replay** lengthens each note and
+plays the line through twice. It reuses this
 repo's shared modules (`js/theory.js`, `js/audio.js`, `js/input.js`, `js/piano.js`)
 and deploys alongside the main app at `…/interval-trainer/melody/`.
 

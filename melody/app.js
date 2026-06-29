@@ -20,6 +20,10 @@
     answerMode: 'numbers', // 'numbers' | 'play'
     autoAdvance: true,
     overOctave: false,     // let melodies climb past the one-octave mark
+    noteSet: 'full',       // 'full' (1–7) | 'triad' (1·3·5) — the easy-mode pool
+    startOnTonic: false,   // pin the first note to degree 1
+    stepwiseOnly: false,   // move only to the adjacent pool tone (no leaps)
+    slowReplay: false,     // play slower and auto-replay once
     stats: { correct: 0, wrong: 0, streak: 0, notesRight: 0, notesTotal: 0 },
   };
   let settings = load();
@@ -43,8 +47,12 @@
     lengthRange: $('lengthRange'),
     lengthValue: $('lengthValue'),
     answerSwitch: $('answerSwitch'),
+    noteSetSelect: $('noteSetSelect'),
     autoAdvance: $('autoAdvance'),
     overOctave: $('overOctave'),
+    startOnTonic: $('startOnTonic'),
+    stepwiseOnly: $('stepwiseOnly'),
+    slowReplay: $('slowReplay'),
     ioRow: $('ioRow'),
     midiDot: $('midiDot'),
     midiText: $('midiText'),
@@ -94,6 +102,17 @@
       els.keySelect.appendChild(opt);
     });
     els.keySelect.value = settings.keyName;
+  }
+
+  function buildNoteSetSelect() {
+    els.noteSetSelect.innerHTML = '';
+    Object.entries(M.NOTE_SETS).forEach(([value, { label }]) => {
+      const opt = document.createElement('option');
+      opt.value = value;
+      opt.textContent = label;
+      els.noteSetSelect.appendChild(opt);
+    });
+    els.noteSetSelect.value = settings.noteSet;
   }
 
   function buildNumberPad() {
@@ -173,12 +192,21 @@
 
   function playMelody({ withKeyRef = false } = {}) {
     if (!melodyDegrees.length) return;
+    // The "Slower + replay" helper lengthens each note and plays the line a
+    // second time after a short breath, so a beginner gets two passes to track.
+    const slow = settings.slowReplay;
+    const noteDur = slow ? 0.7 : 0.45;
+    const gap = slow ? 0.18 : 0.12;
     let startDelay = 0;
     if (withKeyRef) {
       soundKeyRef();
       startDelay = 0.95; // let the chord ring before the line starts
     }
-    const total = audio.playSequence(currentMelodyMidis(), { noteDur: 0.45, gap: 0.12, startDelay });
+    const midis = currentMelodyMidis();
+    let total = audio.playSequence(midis, { noteDur, gap, startDelay });
+    if (slow) {
+      total = audio.playSequence(midis, { noteDur, gap, startDelay: total + 0.6 });
+    }
     input.suppressMic(total * 1000 + 250);
   }
 
@@ -191,7 +219,11 @@
   function newMelody() {
     key = pickKeyForRound();
     tonicMidi = 60 + key.pc;
-    melodyDegrees = M.generateMelody(settings.length, { maxDegree: settings.overOctave ? 9 : 7 });
+    melodyDegrees = M.generateMelody(settings.length, {
+      allowedDegrees: M.degreesForSet(settings.noteSet, { overOctave: settings.overOctave }),
+      startOnTonic: settings.startOnTonic,
+      stepwiseOnly: settings.stepwiseOnly,
+    });
     entries = [];
     pos = 0;
     phase = 'answering';
@@ -399,6 +431,26 @@
     save();
   });
 
+  els.noteSetSelect.addEventListener('change', () => {
+    settings.noteSet = els.noteSetSelect.value;
+    save();
+  });
+
+  els.startOnTonic.addEventListener('change', () => {
+    settings.startOnTonic = els.startOnTonic.checked;
+    save();
+  });
+
+  els.stepwiseOnly.addEventListener('change', () => {
+    settings.stepwiseOnly = els.stepwiseOnly.checked;
+    save();
+  });
+
+  els.slowReplay.addEventListener('change', () => {
+    settings.slowReplay = els.slowReplay.checked;
+    save();
+  });
+
   els.actionBtn.addEventListener('click', () => { audio.ensure(); newMelody(); });
   els.replayBtn.addEventListener('click', () => playMelody());
   els.keyRefBtn.addEventListener('click', () => soundKeyRef());
@@ -420,11 +472,15 @@
 
   /* ---------- init ---------- */
   buildKeySelect();
+  buildNoteSetSelect();
   buildNumberPad();
   els.lengthRange.value = settings.length;
   els.lengthValue.textContent = settings.length;
   els.autoAdvance.checked = settings.autoAdvance;
   els.overOctave.checked = settings.overOctave;
+  els.startOnTonic.checked = settings.startOnTonic;
+  els.stepwiseOnly.checked = settings.stepwiseOnly;
+  els.slowReplay.checked = settings.slowReplay;
   els.keyLabel.textContent = settings.keyName === 'random'
     ? 'Random key each round'
     : `Key of ${key.name} major`;

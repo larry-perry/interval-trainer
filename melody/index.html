@@ -36,6 +36,11 @@
         <input type="range" id="lengthRange" class="slider" min="3" max="8" step="1" value="4" aria-label="Melody length" />
       </label>
 
+      <label class="field" title="Which notes melodies are built from. Triad (1·3·5) is the gentlest — a tonic arpeggio with no half-step tendency tones.">
+        <span class="field-label">Note set</span>
+        <select id="noteSetSelect" class="select" aria-label="Note set"></select>
+      </label>
+
       <div class="size-switch" role="group" aria-label="Answer method" id="answerSwitch">
         <button class="size-btn active" data-answer="numbers" type="button">Numbers</button>
         <button class="size-btn" data-answer="play" type="button">Play&nbsp;it</button>
@@ -55,6 +60,30 @@
           <span class="switch-track"><span class="switch-thumb"></span></span>
         </span>
         <span class="field-label">Over the octave</span>
+      </label>
+
+      <label class="field field-check" title="Always begin the phrase on the tonic (degree 1) for a fixed anchor.">
+        <span class="switch">
+          <input type="checkbox" id="startOnTonic" />
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+        </span>
+        <span class="field-label">Start on 1</span>
+      </label>
+
+      <label class="field field-check" title="Move only to the next note in the set — no leaps.">
+        <span class="switch">
+          <input type="checkbox" id="stepwiseOnly" />
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+        </span>
+        <span class="field-label">Stepwise only</span>
+      </label>
+
+      <label class="field field-check" title="Play the melody slower and replay it once automatically.">
+        <span class="switch">
+          <input type="checkbox" id="slowReplay" />
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+        </span>
+        <span class="field-label">Slower + replay</span>
       </label>
 
       <div class="io" id="ioRow" hidden>
