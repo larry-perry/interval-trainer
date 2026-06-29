@@ -39,9 +39,19 @@
   // A random key from the twelve — used by the "Random key each round" option.
   const randomKey = (rng = Math.random) => KEYS[Math.floor(rng() * KEYS.length)];
 
-  // MIDI note for a degree above a tonic MIDI note (degrees stay within one
-  // octave, so the contour reads directly off the numbers).
-  const degreeToMidi = (tonicMidi, degree) => tonicMidi + MAJOR_OFFSETS[degree - 1];
+  // MIDI note for a degree above a tonic MIDI note. Degrees beyond 7 (e.g. 8 is
+  // the octave, 9 a ninth) wrap into higher octaves, so a melody can climb past
+  // the one-octave mark when that option is on.
+  const degreeToMidi = (tonicMidi, degree) => {
+    const idx = degree - 1;
+    const octave = Math.floor(idx / 7);
+    const within = ((idx % 7) + 7) % 7;
+    return tonicMidi + 12 * octave + MAJOR_OFFSETS[within];
+  };
+
+  // Fold any degree (an octave-up 8, 9, …) to its pitch-class degree 1..7 — how
+  // the answer is judged, since any octave of a note counts.
+  const pcDegree = (degree) => (((degree - 1) % 7) + 7) % 7 + 1;
 
   // Which scale degree a played MIDI note is, relative to the tonic's pitch
   // class — octave-free. Returns 1..7, or null if the note is outside the key
@@ -58,11 +68,13 @@
     return spellName(key.name, key.pc, MAJOR_OFFSETS[degree - 1]).display;
   }
 
-  /* Build a melody as an array of scale degrees (1..7) of the given length.
-   * Lines lean stepwise with the occasional small leap — like real melodies, so
-   * they're singable and learnable rather than random scatter — and start on a
-   * stable tone (1, 3, or 5). All motion is kept inside the 1..7 octave. */
-  function generateMelody(length, { rng = Math.random } = {}) {
+  /* Build a melody as an array of scale degrees of the given length. Lines lean
+   * stepwise with the occasional small leap — like real melodies, so they're
+   * singable and learnable rather than random scatter — and start on a stable
+   * tone (1, 3, or 5). Motion is kept inside [minDegree, maxDegree]; the default
+   * 1..7 stays within one octave, while a higher maxDegree lets the line climb
+   * over the octave mark (8, 9, …). Degrees are still answered by pitch class. */
+  function generateMelody(length, { rng = Math.random, minDegree = 1, maxDegree = 7 } = {}) {
     const stableStarts = [1, 3, 5];
     let prev = stableStarts[Math.floor(rng() * stableStarts.length)];
     const degrees = [prev];
@@ -76,7 +88,7 @@
         else if (r < 0.85) step = rng() < 0.5 ? -2 : 2;  // a third
         else step = rng() < 0.5 ? -3 : 3;                // a wider leap
         next = prev + step;
-      } while (next < 1 || next > 7);
+      } while (next < minDegree || next > maxDegree);
       degrees.push(next);
       prev = next;
     }
@@ -89,6 +101,7 @@
     keyByName,
     randomKey,
     degreeToMidi,
+    pcDegree,
     midiToDegree,
     degreeName,
     generateMelody,

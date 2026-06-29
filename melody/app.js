@@ -19,6 +19,7 @@
     length: 4,
     answerMode: 'numbers', // 'numbers' | 'play'
     autoAdvance: true,
+    overOctave: false,     // let melodies climb past the one-octave mark
     stats: { correct: 0, wrong: 0, streak: 0, notesRight: 0, notesTotal: 0 },
   };
   let settings = load();
@@ -43,6 +44,7 @@
     lengthValue: $('lengthValue'),
     answerSwitch: $('answerSwitch'),
     autoAdvance: $('autoAdvance'),
+    overOctave: $('overOctave'),
     ioRow: $('ioRow'),
     midiDot: $('midiDot'),
     midiText: $('midiText'),
@@ -189,7 +191,7 @@
   function newMelody() {
     key = pickKeyForRound();
     tonicMidi = 60 + key.pc;
-    melodyDegrees = M.generateMelody(settings.length);
+    melodyDegrees = M.generateMelody(settings.length, { maxDegree: settings.overOctave ? 9 : 7 });
     entries = [];
     pos = 0;
     phase = 'answering';
@@ -220,7 +222,8 @@
   function submitDegree(degree, { source = 'pad', midi = null } = {}) {
     if (phase !== 'answering') return;
 
-    const expected = melodyDegrees[pos];
+    // Judge by pitch class: an octave-up note (degree 8/9) is answered as 1/2.
+    const expected = M.pcDegree(melodyDegrees[pos]);
     const correct = degree === expected;
     entries[pos] = degree;
     fillSlot(pos, { entered: degree, correct });
@@ -244,7 +247,8 @@
     phase = 'revealed';
 
     let notesRight = 0;
-    melodyDegrees.forEach((expected, i) => {
+    melodyDegrees.forEach((raw, i) => {
+      const expected = M.pcDegree(raw);
       const correct = entries[i] === expected;
       if (correct) notesRight++;
       fillSlot(i, { correct, expected, reveal: true });
@@ -258,7 +262,7 @@
     save();
     renderStats();
 
-    const numbers = melodyDegrees.join(' ');
+    const numbers = melodyDegrees.map(M.pcDegree).join(' ');
     setReadout(perfect ? '✓' : `${notesRight}/${melodyDegrees.length}`,
       perfect ? `nailed it — ${numbers}` : `it was ${numbers}`);
 
@@ -390,6 +394,11 @@
     save();
   });
 
+  els.overOctave.addEventListener('change', () => {
+    settings.overOctave = els.overOctave.checked;
+    save();
+  });
+
   els.actionBtn.addEventListener('click', () => { audio.ensure(); newMelody(); });
   els.replayBtn.addEventListener('click', () => playMelody());
   els.keyRefBtn.addEventListener('click', () => soundKeyRef());
@@ -415,6 +424,7 @@
   els.lengthRange.value = settings.length;
   els.lengthValue.textContent = settings.length;
   els.autoAdvance.checked = settings.autoAdvance;
+  els.overOctave.checked = settings.overOctave;
   els.keyLabel.textContent = settings.keyName === 'random'
     ? 'Random key each round'
     : `Key of ${key.name} major`;
