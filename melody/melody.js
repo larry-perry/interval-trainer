@@ -36,6 +36,9 @@
 
   const keyByName = (name) => KEYS.find((k) => k.name === name) || KEYS[0];
 
+  // A random key from the twelve — used by the "Random key each round" option.
+  const randomKey = (rng = Math.random) => KEYS[Math.floor(rng() * KEYS.length)];
+
   // MIDI note for a degree above a tonic MIDI note (degrees stay within one
   // octave, so the contour reads directly off the numbers).
   const degreeToMidi = (tonicMidi, degree) => tonicMidi + MAJOR_OFFSETS[degree - 1];
@@ -84,6 +87,7 @@
     MAJOR_OFFSETS,
     KEYS,
     keyByName,
+    randomKey,
     degreeToMidi,
     midiToDegree,
     degreeName,
