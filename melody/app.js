@@ -188,13 +188,13 @@
   }
 
   // Sound the key's tonal centre. By default this is a struck I chord; with the
-  // "Drone reference" option on it's a quiet sustained tonic-and-fifth drone.
-  // `holdFor` lets a caller (the melody playback) stretch the drone so it holds
-  // under the whole line; the standalone "Key ♪" button uses a short default.
-  function soundKeyRef({ holdFor = 2.4 } = {}) {
+  // "Drone reference" option on it's a quiet sustained tonic-and-fifth drone
+  // that keeps holding under the melody and your answer until the phrase is
+  // resolved (or a new round replaces it) — see finishPhrase/newMelody.
+  function soundKeyRef() {
     if (settings.drone) {
-      const dur = audio.playDrone([tonicMidi, tonicMidi + 7], holdFor);
-      input.suppressMic(dur * 1000 + 200);
+      audio.startDrone([tonicMidi, tonicMidi + 7]);
+      input.suppressMic(700);
     } else {
       audio.playChord([tonicMidi, tonicMidi + 4, tonicMidi + 7], 0.75);
       input.suppressMic(900);
@@ -212,18 +212,10 @@
 
     let startDelay = 0;
     if (withKeyRef) {
-      if (settings.drone) {
-        // A drone comes in fast and holds *under* the line rather than ringing
-        // out before it — so just a short breath, then keep it sounding through
-        // both passes of the melody.
-        startDelay = 0.55;
-        const passes = slow ? 2 : 1;
-        const lineTime = midis.length * (noteDur + gap) * passes + (slow ? 0.6 : 0);
-        soundKeyRef({ holdFor: startDelay + lineTime + 0.4 });
-      } else {
-        soundKeyRef();
-        startDelay = 0.95; // let the chord ring before the line starts
-      }
+      soundKeyRef();
+      // A drone is already holding underneath, so the line can come in after a
+      // short breath; a struck chord wants longer to ring out first.
+      startDelay = settings.drone ? 0.55 : 0.95;
     }
     let total = audio.playSequence(midis, { noteDur, gap, startDelay });
     if (slow) {
@@ -299,6 +291,9 @@
 
   function finishPhrase() {
     phase = 'revealed';
+    // Let the drone ring a touch into the reveal, then release it; the next
+    // melody (or a manual New melody) starts a fresh one for its key.
+    if (settings.drone) audio.stopDrone(0.8);
 
     let notesRight = 0;
     melodyDegrees.forEach((raw, i) => {
@@ -475,6 +470,7 @@
 
   els.drone.addEventListener('change', () => {
     settings.drone = els.drone.checked;
+    if (!settings.drone) audio.stopDrone(0.2); // silence a drone already holding
     save();
   });
 

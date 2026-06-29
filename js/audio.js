@@ -157,27 +157,27 @@
     midis.forEach((m) => playMidi(m, 0, dur));
   }
 
-  /* Play a quiet sustained drone on the given MIDI notes — a soft, organ-ish
-   * pad that holds a tonal centre under the melody. Unlike `playChord` (a
-   * struck, decaying piano voice), this fades in, holds steady at a low level
-   * for `duration` seconds, then fades out, so it sits in the background as a
-   * reference rather than competing with the line. The first note carries a
-   * gentle octave partial for warmth; any extras (e.g. the fifth) are softer. */
-  function playDrone(midis, duration = 2.5, gain = 0.06) {
+  /* A quiet sustained drone — a soft, organ-ish pad that holds a tonal centre
+   * *indefinitely* under the melody and the player's answer, until stopped.
+   * Unlike `playChord` (a struck, decaying piano voice), it fades in and then
+   * holds steady at a low level, sitting in the background as a reference rather
+   * than competing with the line. The first note carries a gentle octave partial
+   * for warmth; any extras (e.g. the fifth) are softer.
+   *
+   * Only one drone sounds at a time: starting a new one releases the old. */
+  let droneVoice = null; // { master, oscs } of the currently-sounding drone
+
+  function startDrone(midis, { gain = 0.06, attack = 0.3 } = {}) {
     ensure();
+    stopDrone(0.08); // a new tonal centre replaces any drone already sounding
     const now = ctx.currentTime;
-    const attack = 0.3;
-    const release = 0.6;
-    const hold = Math.max(attack, duration - release);
 
     const master = ctx.createGain();
     master.gain.setValueAtTime(0.0001, now);
     master.gain.exponentialRampToValueAtTime(gain, now + attack);
-    master.gain.setValueAtTime(gain, now + hold);
-    master.gain.exponentialRampToValueAtTime(0.0001, now + duration);
     master.connect(ctx.destination);
 
-    const stopTime = now + duration + 0.1;
+    const oscs = [];
     midis.forEach((m, idx) => {
       const freq = midiToFreq(m);
       const partials = idx === 0
@@ -192,11 +192,30 @@
         osc.connect(g);
         g.connect(master);
         osc.start(now);
-        osc.stop(stopTime);
+        oscs.push(osc);
       });
     });
-    return duration;
+    droneVoice = { master, oscs };
   }
 
-  App.audio = { ensure, getContext, resumeIfNeeded, playMidi, playInterval, playSequence, playChord, playDrone };
+  // Fade out and tear down the current drone (no-op if none is sounding).
+  function stopDrone(release = 0.6) {
+    if (!droneVoice || !ctx) return;
+    const { master, oscs } = droneVoice;
+    droneVoice = null;
+    const now = ctx.currentTime;
+    try {
+      if (master.gain.cancelAndHoldAtTime) {
+        master.gain.cancelAndHoldAtTime(now);
+      } else {
+        master.gain.cancelScheduledValues(now);
+        master.gain.setValueAtTime(master.gain.value || 0.0001, now);
+      }
+      master.gain.exponentialRampToValueAtTime(0.0001, now + release);
+    } catch (_) { /* ignore automation quirks across browsers */ }
+    const stopAt = now + release + 0.05;
+    oscs.forEach((o) => { try { o.stop(stopAt); } catch (_) { /* already stopped */ } });
+  }
+
+  App.audio = { ensure, getContext, resumeIfNeeded, playMidi, playInterval, playSequence, playChord, startDrone, stopDrone };
 })(window.App = window.App || {});
